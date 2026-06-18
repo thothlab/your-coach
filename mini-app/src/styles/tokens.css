@@ -15,3 +15,44 @@ body {
   color: var(--color-text);
   font-family: var(--font-base);
 }
+
+.page {
+  padding: 16px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.page h1 {
+  font-size: 24px;
+  margin: 0 0 16px;
+}
+
+.page h2 {
+  font-size: 18px;
+  margin: 24px 0 8px;
+}
+
+.page ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.page li {
+  padding: 12px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text) 12%, transparent);
+}
+
+.page button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  background: var(--color-accent);
+  color: var(--tg-theme-button-text-color, #ffffff);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.page button:disabled {
+  opacity: 0.5;
+}

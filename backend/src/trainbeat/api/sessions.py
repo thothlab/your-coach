@@ -10,6 +10,7 @@ from ..models import AttendanceStatus, SessionStatus, User, UserRole
 from ..repositories import attendance as attendance_repo
 from ..repositories import group as group_repo
 from ..repositories import membership as membership_repo
+from ..repositories import notification as notification_repo
 from ..repositories import session as session_repo
 from ..repositories import workout as workout_repo
 from ..repositories import workout_log as workout_log_repo
@@ -90,6 +91,12 @@ async def create_session(
         await attendance_repo.initialize_for_session(
             session, session_id=row.id, group_id=body.group_id
         )
+        await notification_repo.schedule_session_reminders(
+            session,
+            session_id=row.id,
+            group_id=body.group_id,
+            scheduled_at=row.scheduled_at,
+        )
         return [_to_response(row)]
 
     rows = await session_repo.create_recurring(
@@ -103,6 +110,12 @@ async def create_session(
     for row in rows:
         await attendance_repo.initialize_for_session(
             session, session_id=row.id, group_id=body.group_id
+        )
+        await notification_repo.schedule_session_reminders(
+            session,
+            session_id=row.id,
+            group_id=body.group_id,
+            scheduled_at=row.scheduled_at,
         )
     return [_to_response(row) for row in rows]
 
@@ -127,6 +140,7 @@ async def cancel_session(
             status_code=409, detail=f"cannot cancel session with status {row.status.value}"
         )
     await session_repo.cancel(session, row)
+    await notification_repo.cancel_for_session(session, session_id)
     return {"status": "cancelled"}
 
 

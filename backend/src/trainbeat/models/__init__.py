@@ -4,6 +4,7 @@ from .exercise import Exercise, ExerciseUnit
 from .group import Group, GroupType
 from .invite import Invite
 from .membership import Membership, MembershipStatus
+from .notification import Notification, NotificationKind, NotificationStatus
 from .session import Session, SessionStatus
 from .user import User, UserRole
 from .workout_log import WorkoutLog
@@ -20,6 +21,9 @@ __all__ = [
     "Invite",
     "Membership",
     "MembershipStatus",
+    "Notification",
+    "NotificationKind",
+    "NotificationStatus",
     "Session",
     "SessionStatus",
     "User",

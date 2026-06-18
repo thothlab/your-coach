@@ -11,6 +11,7 @@ from ..models import GroupType, User, UserRole
 from ..repositories import group as group_repo
 from ..repositories import invite as invite_repo
 from ..repositories import membership as membership_repo
+from ..repositories import notification as notification_repo
 from .deps import current_user
 
 router = APIRouter(prefix="/api/groups", tags=["groups"])
@@ -38,6 +39,14 @@ class InviteResponse(BaseModel):
     token: str
     url: str
     expires_at: str
+
+
+class BroadcastRequest(BaseModel):
+    text: str = Field(..., min_length=1, max_length=4000)
+
+
+class BroadcastResponse(BaseModel):
+    recipient_count: int
 
 
 def _require_trainer(user: User) -> None:
@@ -126,6 +135,42 @@ async def create_invite(
         url=url,
         expires_at=invite.expires_at.isoformat(),
     )
+
+
+@router.post(
+    "/{group_id}/broadcast", response_model=BroadcastResponse, status_code=202
+)
+async def broadcast(
+    group_id: int,
+    body: BroadcastRequest,
+    user: Annotated[User, Depends(current_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> BroadcastResponse:
+    _require_trainer(user)
+    group = await group_repo.get(session, group_id)
+    if group is None or group.trainer_id != user.id:
+        raise HTTPException(status_code=404, detail="group not found")
+
+    memberships = await membership_repo.list_for_group(session, group_id)
+    active_ids = [
+        m.athlete_id for m in memberships if m.status.value == "active"
+    ]
+
+    sent_in_window = await notification_repo.broadcast_count_in_window(
+        session,
+        group_member_ids=active_ids,
+        window_seconds=int(notification_repo.BROADCAST_WINDOW.total_seconds()),
+    )
+    # Rate limit: each broadcast creates len(active_ids) rows. So divide.
+    member_count = max(1, len(active_ids))
+    broadcasts_so_far = sent_in_window // member_count
+    if broadcasts_so_far >= notification_repo.BROADCAST_RATE_LIMIT:
+        raise HTTPException(status_code=429, detail="broadcast rate limit exceeded")
+
+    await notification_repo.schedule_broadcast(
+        session, group_member_ids=active_ids, text=body.text
+    )
+    return BroadcastResponse(recipient_count=len(active_ids))
 
 
 @router.delete("/{group_id}/members/{athlete_id}", status_code=204)

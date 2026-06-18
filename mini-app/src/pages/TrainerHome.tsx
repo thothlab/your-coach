@@ -4,6 +4,7 @@ import type { TrainBeatApi, User } from "../api";
 interface Props {
   api: TrainBeatApi;
   user: User;
+  onOpenSession: (sessionId: number) => void;
 }
 
 export const TrainerHome: Component<Props> = (props) => {
@@ -22,7 +23,7 @@ export const TrainerHome: Component<Props> = (props) => {
         <h2>Groups</h2>
         <Show when={groups.loading}>Loading…</Show>
         <Show when={!groups.loading && (groups()?.length ?? 0) === 0}>
-          <p>No groups yet. Create one to start inviting athletes.</p>
+          <p>No groups yet. Use the bot's /invite command or POST /api/groups.</p>
         </Show>
         <ul>
           <For each={groups()}>
@@ -48,11 +49,16 @@ export const TrainerHome: Component<Props> = (props) => {
           <For each={sessions()}>
             {(session) => (
               <li>
-                {new Date(session.scheduled_at).toLocaleString()} · {session.duration_min} min
-                <Show when={session.recurrence_rule}>
-                  {" "}
-                  <small>· recurring</small>
-                </Show>
+                <div>
+                  {new Date(session.scheduled_at).toLocaleString()} · {session.duration_min} min
+                  <Show when={session.recurrence_rule}>
+                    {" "}
+                    <small>· recurring</small>
+                  </Show>
+                </div>
+                <button type="button" onClick={() => props.onOpenSession(session.id)}>
+                  Open
+                </button>
               </li>
             )}
           </For>

@@ -6,10 +6,12 @@ import {
   Suspense,
   Switch,
   createResource,
+  createSignal,
 } from "solid-js";
 import { TrainBeatApi, type User } from "./api";
 import { getInitData, getWebApp } from "./lib/telegram";
 import { AthleteHome } from "./pages/AthleteHome";
+import { SessionDetail } from "./pages/SessionDetail";
 import { TrainerHome } from "./pages/TrainerHome";
 
 async function bootstrap(): Promise<{ api: TrainBeatApi; user: User }> {
@@ -38,6 +40,7 @@ function applyTheme(): void {
 export const App: Component = () => {
   applyTheme();
   const [session] = createResource(bootstrap);
+  const [openSessionId, setOpenSessionId] = createSignal<number | null>(null);
 
   return (
     <ErrorBoundary
@@ -60,14 +63,26 @@ export const App: Component = () => {
       >
         <Show when={session()} keyed>
           {(s) => (
-            <Switch>
-              <Match when={s.user.role === "trainer"}>
-                <TrainerHome api={s.api} user={s.user} />
-              </Match>
-              <Match when={s.user.role === "athlete"}>
-                <AthleteHome api={s.api} user={s.user} />
-              </Match>
-            </Switch>
+            <Show
+              when={openSessionId() !== null}
+              fallback={
+                <Switch>
+                  <Match when={s.user.role === "trainer"}>
+                    <TrainerHome api={s.api} user={s.user} onOpenSession={setOpenSessionId} />
+                  </Match>
+                  <Match when={s.user.role === "athlete"}>
+                    <AthleteHome api={s.api} user={s.user} onOpenSession={setOpenSessionId} />
+                  </Match>
+                </Switch>
+              }
+            >
+              <SessionDetail
+                api={s.api}
+                user={s.user}
+                sessionId={openSessionId() as number}
+                onBack={() => setOpenSessionId(null)}
+              />
+            </Show>
           )}
         </Show>
       </Suspense>

@@ -4,6 +4,7 @@ import type { TrainBeatApi, User } from "../api";
 interface Props {
   api: TrainBeatApi;
   user: User;
+  onOpenSession: (sessionId: number) => void;
 }
 
 export const AthleteHome: Component<Props> = (props) => {
@@ -53,6 +54,9 @@ export const AthleteHome: Component<Props> = (props) => {
                     onClick={() => confirm(session.id, "declined")}
                   >
                     Decline
+                  </button>{" "}
+                  <button type="button" onClick={() => props.onOpenSession(session.id)}>
+                    Open
                   </button>
                 </div>
               </li>

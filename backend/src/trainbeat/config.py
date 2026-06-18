@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     public_base_url: str = "http://localhost:8000"
     database_url: str
     app_env: str = "dev"
+    bot_mode: str = "polling"  # "polling" | "webhook"
     mini_app_dist: str = "mini-app/dist"
     scheduler_interval_minutes: int = 15
 

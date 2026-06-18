@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  launchd unit for the SSH reverse tunnel from Mac Mini to the VPS.
+
+  Install:
+    cp deploy/com.trainbeat.tunnel.plist ~/Library/LaunchAgents/
+    launchctl load -w ~/Library/LaunchAgents/com.trainbeat.tunnel.plist
+
+  Requires `autossh` in PATH (`brew install autossh`) and an SSH key for
+  the `tunnel` user on the VPS already authorized in
+  /home/tunnel/.ssh/authorized_keys with no command/options restrictions
+  beyond what the other tunnels already use.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.trainbeat.tunnel</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/bin/autossh</string>
+    <string>-M</string><string>0</string>
+    <string>-N</string>
+    <string>-o</string><string>ServerAliveInterval=30</string>
+    <string>-o</string><string>ServerAliveCountMax=3</string>
+    <string>-o</string><string>ExitOnForwardFailure=yes</string>
+    <string>-R</string><string>8100:localhost:8000</string>
+    <string>-p</string><string>58222</string>
+    <string>tunnel@153.80.185.242</string>
+  </array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>/tmp/trainbeat-tunnel.log</string>
+  <key>StandardErrorPath</key><string>/tmp/trainbeat-tunnel.log</string>
+</dict>
+</plist>

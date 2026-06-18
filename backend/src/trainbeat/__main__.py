@@ -30,7 +30,7 @@ def _configure_logging() -> None:
 
 
 async def _serve_polling() -> None:
-    """Dev mode: long-poll Telegram + serve HTTP + run scheduler."""
+    """Long-poll Telegram + serve HTTP + run scheduler."""
     bot = Bot(settings.telegram_bot_token)
     app.state.bot = bot
     scheduler = build_scheduler(make_telegram_sender(bot))
@@ -44,7 +44,7 @@ async def _serve_polling() -> None:
 
 
 async def _serve_webhook() -> None:
-    """Prod mode: webhook-driven bot + serve HTTP + run scheduler."""
+    """Webhook-driven bot + serve HTTP + run scheduler (opt-in via BOT_MODE)."""
     bot = Bot(settings.telegram_bot_token)
     app.state.bot = bot
     scheduler = build_scheduler(make_telegram_sender(bot))
@@ -60,10 +60,10 @@ async def _serve_webhook() -> None:
 
 def _serve() -> None:
     _configure_logging()
-    if settings.app_env == "dev":
-        asyncio.run(_serve_polling())
-    else:
+    if settings.bot_mode == "webhook":
         asyncio.run(_serve_webhook())
+    else:
+        asyncio.run(_serve_polling())
 
 
 def main(argv: list[str] | None = None) -> int:

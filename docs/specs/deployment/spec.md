@@ -3,7 +3,7 @@
 ## Requirements
 
 ### Requirement: A single Docker image carries the whole service
-The build MUST produce one container image that, on `docker run`, exposes the HTTP API, dispatches the Telegram bot (via webhook in production), and runs the notification worker — in one process.
+The build MUST produce one container image that, on `docker run`, exposes the HTTP API, dispatches the Telegram bot, and runs the notification worker — in one process.
 
 #### Scenario: Local docker run
 - GIVEN a clean machine with Docker installed
@@ -15,39 +15,42 @@ The build MUST produce one container image that, on `docker run`, exposes the HT
 - WHEN the build finishes
 - THEN the image size is ≤ 400 MB uncompressed
 
-### Requirement: Service is reachable over public HTTPS after deploy
-The deploy pipeline MUST produce a public HTTPS URL (`https://<app-name>.fly.dev` by default) that responds `200 OK` at `/healthz` within 5 minutes of `flyctl deploy` completing.
+### Requirement: Service is reachable over public HTTPS through the VPS TLS front
+Production runs on the Mac Mini home server, fronted by Caddy on the existing VPS (`devipad.ru`) over an SSH reverse tunnel. The public host `trainbeat.devipad.ru` MUST respond `200 OK` at `/healthz` whenever the Mac Mini stack is healthy and the tunnel is up.
 
-#### Scenario: Smoke check after deploy
-- GIVEN a successful `flyctl deploy` run
-- WHEN the deploy GitHub Action's smoke step hits `https://<app-name>.fly.dev/healthz`
+#### Scenario: Public reachability through Caddy + tunnel
+- GIVEN the Mac Mini `docker compose` stack is running and the SSH reverse tunnel from Mac Mini → VPS:8100 is established
+- WHEN any client hits `https://trainbeat.devipad.ru/healthz`
 - THEN the response status is `200` and body is `{"status":"ok"}`
-- AND the action exits 0; otherwise it exits 1 and the build is marked failed
 
-### Requirement: Secrets are managed by the host, never committed
-Production secrets (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `DATABASE_URL`) MUST be set via `flyctl secrets set` (or equivalent) and MUST NOT appear in source, Docker image layers, or CI logs.
+#### Scenario: Tunnel auto-recovery
+- GIVEN the autossh launchd agent on the Mac Mini owns the reverse tunnel
+- WHEN the SSH connection drops (network blip, VPS reload)
+- THEN autossh re-establishes the tunnel within 30 seconds without manual intervention
+
+### Requirement: Secrets are managed on the host, never committed
+Production secrets (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` if used, `DATABASE_URL`) MUST live in the Mac Mini's `.env` file (gitignored) and MUST NOT appear in source, Docker image layers, or CI logs.
 
 #### Scenario: Repo scan
 - GIVEN the repository at any commit
 - WHEN a grep scan looks for the literal pattern of a Telegram token (`\d{8,10}:[A-Za-z0-9_-]{30,}`) across tracked files
 - THEN zero matches are found
 
-#### Scenario: CI log redaction
-- GIVEN the deploy GitHub Action with `TELEGRAM_BOT_TOKEN` set as a repository secret
-- WHEN the job runs
-- THEN the action logs do not contain the token value (masked by Actions' secret redaction)
+### Requirement: Telegram updates arrive via long-polling by default
+The bot MUST receive Telegram updates via `getUpdates` (long-polling) in the default configuration. The webhook handler (`POST /api/telegram/webhook`) remains implemented and tested, but is only active when `BOT_MODE=webhook`.
 
-### Requirement: Telegram updates arrive via webhook in production
-In production the bot MUST receive updates through `POST /api/telegram/webhook` authenticated by the `X-Telegram-Bot-Api-Secret-Token` header; long-polling MUST be disabled.
+#### Scenario: Bot connects without an inbound webhook
+- GIVEN a fresh deployment with `BOT_MODE=polling` (default) and no webhook configured in BotFather
+- WHEN the process starts
+- THEN logs show `bot polling started` and the bot replies to `/start` from a test account within 5 seconds
 
-#### Scenario: Webhook configured after deploy
-- GIVEN a successful deploy
-- WHEN `scripts/botfather_setup.py` runs against the production URL
-- THEN `getWebhookInfo` returns the production `/api/telegram/webhook` URL with `pending_update_count` ≤ some threshold
-- AND a subsequent `/start` from a test account is dispatched and replied to within 5 seconds
+#### Scenario: Webhook opt-in
+- GIVEN `BOT_MODE=webhook` is set in `.env` AND `SETUP_WEBHOOK=1 python scripts/botfather_setup.py` has been run
+- WHEN Telegram delivers an update to `https://trainbeat.devipad.ru/api/telegram/webhook` with the configured `X-Telegram-Bot-Api-Secret-Token`
+- THEN the update is dispatched and a reply is sent within 5 seconds
 
-#### Scenario: Missing or wrong secret token rejected
-- GIVEN the production webhook endpoint
+#### Scenario: Missing or wrong secret token rejected on the webhook
+- GIVEN the webhook endpoint is exposed
 - WHEN a request arrives without `X-Telegram-Bot-Api-Secret-Token` or with a mismatched value
 - THEN the response is `401` and no update is processed
 

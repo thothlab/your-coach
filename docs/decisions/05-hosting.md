@@ -1,49 +1,64 @@
-# Decision 05 — Hosting (PRD-02)
+# Decision 05 — Hosting (PRD-02, revised)
 
 **Date:** 2026-06-18
-**Status:** Accepted
+**Status:** Accepted (supersedes the Fly.io draft from the original PRD-02)
 
 ## Decision
 
-Production runs on **Fly.io** as a single Machine in a single region (Amsterdam, `ams`), with **Fly Postgres** attached as the managed database. The single Machine carries the FastAPI HTTP API, the aiogram webhook dispatcher, and the apscheduler notification worker — all in one Python process.
+Production runs on the **owner's Mac Mini** (home server already hosting Gitea, Jellyfin, Immich, Calibre-Web, FileBrowser, Navidrome). A pre-existing **VPS at `devipad.ru`** acts as a TLS front: Caddy on the VPS terminates HTTPS for `trainbeat.devipad.ru` and reverse-proxies into an SSH reverse-tunnel that the Mac Mini opens against the VPS — the same pattern already battle-tested by the other six self-hosted services.
+
+Everything (FastAPI + aiogram + apscheduler + Postgres) runs on the Mac Mini via `docker compose`. Reverse-tunnel keeps the public surface limited to the VPS's existing TLS edge.
 
 ## Rationale
 
-- Fly's free-of-cold-start machines pair well with the in-process scheduler — `auto_stop_machines = false` keeps the worker alive without a separate cron service.
-- Single-region single-machine is sufficient for the first paying trainer (≤ 100 athletes). Multi-region or autoscaling is not yet justified.
-- Fly Postgres is one `fly pg create && fly pg attach` away; no extra account, no payment integration.
-- Free TLS/HTTPS via Fly's auto-cert on the `*.fly.dev` subdomain — unblocks BotFather menu button without buying a domain.
+- **Cost = 0.** Both machines exist; no new hosting, no card, no managed PG bill.
+- **Resources.** Mac Mini has plenty of RAM/CPU/disk; VPS has 2 GB RAM with Caddy + Xray + x-ui already eating into it.
+- **Operational pattern already proven.** Caddy reverse-proxy → SSH reverse-tunnel → home service is the standard rig (`git.devipad.ru`, `video.devipad.ru`, etc.). Adding `trainbeat.devipad.ru` is one Caddyfile snippet and one tunnel.
+- **TLS only where needed.** Telegram requires HTTPS for Mini-App URL and webhook; Caddy's auto-TLS on the VPS gives both without buying a separate domain.
+- **Bot independence from public reachability.** Long-polling means the bot ↔ Telegram channel works even if the VPS or the tunnel is down; only Mini-App goes dark in that case.
 
 ## Rejected
 
-- **Render** — cheaper hobby tier but worker tasks require a separate "Background worker" service, splitting the process model.
-- **Railway** — similar to Render; pricing changes have been volatile recently.
-- **Fly Machines split (api machine + worker machine)** — operationally cleaner for outage isolation, but doubles the cost and adds inter-process state to reason about. Deferred to a future PRD if a real reason emerges.
+- **Fly.io single-machine + Fly Postgres** — costs real money, second account to manage, redundant with home server. (This was the original PRD-02 plan; reversed once the existing VPS-tunnel infra surfaced.)
+- **VPS-only deploy.** Fits but RAM is tight (1.7 GB free with Caddy + Xray) — leaves zero headroom for PG growth and one OOM takes Xray down too.
+- **Cloudflare Tunnel.** Works but introduces a third-party dependency for something the SSH-tunnel pattern already solves natively.
+
+## Architecture
+
+```
+                     Telegram clients
+                          │
+                  HTTPS  │   long-poll
+                  443    │   getUpdates
+                          ▼
+┌──────────────── VPS (153.80.185.242) ────────────────┐
+│  Caddy (auto-TLS for *.devipad.ru)                    │
+│    trainbeat.devipad.ru → 127.0.0.1:8100              │
+│    (8100 = SSH reverse-tunnel port from Mac Mini)     │
+└────────────────────────┬──────────────────────────────┘
+                          │  ssh -R 8100:localhost:8000
+                          │  via autossh (Mac Mini → VPS)
+                          ▼
+┌──────────────── Mac Mini (home) ──────────────────────┐
+│  docker compose:                                       │
+│    app   → trainbeat:latest on :8000                   │
+│    db    → postgres:16-alpine on :5432 (host-local)    │
+│  outbound: bot polls Telegram, sends reminders         │
+└────────────────────────────────────────────────────────┘
+```
 
 ## Consequences
 
-- One outage = bot + API + worker all down. Acceptable for MVP traffic; documented in the README runbook.
-- `fly launch` is a one-time interactive step the user runs manually; subsequent `fly deploy` is non-interactive and triggered by CI.
-- Secrets live in Fly (`fly secrets set …`); GitHub Action only needs `FLY_API_TOKEN` (deploy auth).
+- **Single point of failure for Mini-App = home internet / Mac Mini.** Bot keeps working (long-poll), but Mini-App is unreachable. Acceptable for MVP traffic; matches the SLO of the other self-hosted services.
+- **No CI deploy job.** Deploy is a `git pull && docker compose up -d --build` on the Mac Mini, optionally wrapped in a post-merge hook on the home-side clone. Adding remote SSH-deploy from GitHub Actions would punch a hole into the home network for marginal benefit — deferred.
+- **Postgres is local to Mac Mini.** Backups are the home server's existing backup routine; document the location in `deploy/README.md`.
+- **VPS Caddyfile picks up one extra snippet.** Already conventional — see `deploy/Caddyfile.snippet`.
 
-## First-time setup runbook
+## First-time setup runbook (high level)
 
-```bash
-fly auth login                       # opens a browser; one-time per dev
-fly launch --no-deploy               # answer prompts; uses fly.toml
-fly pg create --name trainbeat-db    # answer prompts for region / size
-fly pg attach --app trainbeat trainbeat-db   # sets DATABASE_URL secret
-fly secrets set \
-  TELEGRAM_BOT_TOKEN=<...> \
-  TELEGRAM_WEBHOOK_SECRET=$(openssl rand -hex 32) \
-  TELEGRAM_BOT_USERNAME=trainbeat_bot \
-  TELEGRAM_WEBAPP_URL=https://<app>.fly.dev/ \
-  PUBLIC_BASE_URL=https://<app>.fly.dev
-fly deploy                           # first manual deploy
-PUBLIC_BASE_URL=https://<app>.fly.dev \
-  TELEGRAM_BOT_TOKEN=<...> \
-  TELEGRAM_WEBHOOK_SECRET=<...> \
-  python scripts/botfather_setup.py
-```
+See `deploy/README.md` for the exact commands. Short form:
 
-Set repository secret `FLY_API_TOKEN` (from `fly auth token`) so the GitHub Action can `fly deploy` on push.
+1. On the VPS: append `deploy/Caddyfile.snippet` to `/etc/caddy/Caddyfile`, reload Caddy.
+2. On the Mac Mini: `git clone`, fill `.env`, `docker compose -f deploy/docker-compose.prod.yml up -d --build`.
+3. Mac Mini: launch a persistent `autossh -R 8100:localhost:8000 tunnel@devipad.ru -p 58222` (systemd/launchd unit).
+4. Anywhere with the token: `python scripts/botfather_setup.py` — sets command list and menu button to `https://trainbeat.devipad.ru/`.

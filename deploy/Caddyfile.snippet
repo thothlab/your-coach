@@ -1,0 +1,9 @@
+# Append to /etc/caddy/Caddyfile on the VPS (153.80.185.242 / devipad.ru),
+# then: sudo systemctl reload caddy
+#
+# 8100 is an unused port on the VPS — Mac Mini opens an SSH reverse tunnel
+# (-R 8100:localhost:8000) so Caddy reaches the local app process.
+trainbeat.devipad.ru {
+    reverse_proxy 127.0.0.1:8100
+    encode zstd gzip
+}

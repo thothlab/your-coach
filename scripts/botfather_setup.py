@@ -1,9 +1,12 @@
-"""One-shot BotFather configuration: commands, menu button, webhook.
+"""One-shot BotFather configuration: commands, menu button (default).
 
 Reads from environment:
     TELEGRAM_BOT_TOKEN        — required
-    TELEGRAM_WEBHOOK_SECRET   — required
-    PUBLIC_BASE_URL           — required, e.g. https://trainbeat.fly.dev
+    PUBLIC_BASE_URL           — required, e.g. https://trainbeat.devipad.ru
+
+Optional webhook setup (only when BOT_MODE=webhook in production):
+    SETUP_WEBHOOK=1           — enables setWebhook call
+    TELEGRAM_WEBHOOK_SECRET   — required when SETUP_WEBHOOK=1
 
 Idempotent — re-running yields the same final state.
 """
@@ -42,13 +45,13 @@ def _api(token: str, method: str, payload: dict) -> dict:
 
 def main() -> int:
     token = _need("TELEGRAM_BOT_TOKEN")
-    secret = _need("TELEGRAM_WEBHOOK_SECRET")
     base = _need("PUBLIC_BASE_URL").rstrip("/")
+    setup_webhook = os.environ.get("SETUP_WEBHOOK", "").strip() == "1"
 
-    print("[1/3] setMyCommands")
+    print("[1/2] setMyCommands")
     _api(token, "setMyCommands", {"commands": COMMANDS})
 
-    print("[2/3] setChatMenuButton")
+    print("[2/2] setChatMenuButton")
     _api(
         token,
         "setChatMenuButton",
@@ -61,22 +64,31 @@ def main() -> int:
         },
     )
 
-    print("[3/3] setWebhook")
-    _api(
-        token,
-        "setWebhook",
-        {
-            "url": f"{base}/api/telegram/webhook",
-            "secret_token": secret,
-            "drop_pending_updates": False,
-            "allowed_updates": ["message", "callback_query"],
-        },
-    )
-
-    info = _api(token, "getWebhookInfo", {})
-    print(json.dumps(info.get("result"), indent=2, ensure_ascii=False))
-    if info["result"]["url"] != f"{base}/api/telegram/webhook":
-        sys.exit("getWebhookInfo URL mismatch — BotFather did not accept the URL")
+    if setup_webhook:
+        secret = _need("TELEGRAM_WEBHOOK_SECRET")
+        print("[opt] setWebhook (SETUP_WEBHOOK=1)")
+        _api(
+            token,
+            "setWebhook",
+            {
+                "url": f"{base}/api/telegram/webhook",
+                "secret_token": secret,
+                "drop_pending_updates": False,
+                "allowed_updates": ["message", "callback_query"],
+            },
+        )
+        info = _api(token, "getWebhookInfo", {})
+        print(json.dumps(info.get("result"), indent=2, ensure_ascii=False))
+        if info["result"]["url"] != f"{base}/api/telegram/webhook":
+            sys.exit("getWebhookInfo URL mismatch — BotFather did not accept the URL")
+    else:
+        info = _api(token, "getWebhookInfo", {})
+        current = info["result"].get("url", "")
+        if current:
+            print(
+                f"[info] webhook is set to {current}; "
+                "polling-mode bots should not have a webhook — call deleteWebhook to clear"
+            )
 
     print("ok — BotFather is configured")
     return 0

@@ -1,25 +1,25 @@
-# Decision 06 — Telegram delivery mode (PRD-02)
+# Decision 06 — Telegram delivery mode (PRD-02, revised)
 
 **Date:** 2026-06-18
-**Status:** Accepted
+**Status:** Accepted (supersedes the webhook-in-prod draft once hosting moved to Mac Mini home-server in ADR-05)
 
 ## Decision
 
-In **production** the bot receives updates via **webhook** (`POST /api/telegram/webhook`) authenticated by `X-Telegram-Bot-Api-Secret-Token`. In **development** (`APP_ENV=dev`) the bot uses long-polling.
+The bot uses **Telegram long-polling in every environment** (dev and prod). The webhook endpoint (`POST /api/telegram/webhook`) stays implemented and tested, gated behind `BOT_MODE=webhook`, but the default is polling.
 
 ## Rationale
 
-- Fly's machine model assumes the process is reachable over HTTPS — webhooks are the natural fit. Long-polling would still work but burns CPU on idle.
-- Webhook + secret token gives us first-class request authentication without writing our own JWT/HMAC layer.
-- Telegram delivers updates with retries on 5xx, providing free at-least-once semantics for the bot path.
+- The Mac Mini outbound-connects to `api.telegram.org`; no inbound HTTPS needed for the bot to work. This frees the bot from the VPS Caddy + reverse-tunnel hop — bot↔Telegram keeps working even when the public domain is briefly down.
+- The Mini-App still needs the public HTTPS domain (`trainbeat.devipad.ru`), but the bot doesn't. Separating those failure domains is a free win.
+- Webhook code is kept (one file + tests) so flipping `BOT_MODE` switches modes without code changes — useful when we eventually want lower latency on bot updates or scale to multiple instances.
 
 ## Rejected
 
-- **Long-polling in production** — works but is wasteful on a machine that already serves HTTP; harder to scale beyond one machine; we'd lose the implicit request-trace baseline.
-- **Hybrid (polling + webhook)** — Telegram only accepts one mode at a time per token; trying to mix risks "wrong number of pending updates" diagnostics that consume time.
+- **Webhook in prod.** Would tie the bot's liveness to the VPS Caddy + tunnel chain. Adds operational coupling for marginal latency benefit at MVP scale.
+- **Hybrid (poll + webhook fall-back).** Telegram only honors one mode per token at any time. Mixing is not possible without surgically `deleteWebhook`/`setWebhook` between modes; not worth it.
 
 ## Consequences
 
-- Bot is only reachable while the Fly machine is up and the public URL resolves. (Acceptable; same as the API.)
-- Switching modes requires `setWebhook` / `deleteWebhook` calls — encoded in `scripts/botfather_setup.py` (sets webhook) and a documented `flyctl ssh console` snippet to delete it when reverting to polling for local debug.
-- The `APP_ENV` flag is the single switch — no separate `BOT_MODE` env to reason about.
+- `scripts/botfather_setup.py` does **not** call `setWebhook` in the default flow. It only sets the command list and menu button. If `BOT_MODE=webhook` is chosen later, run the script with `SETUP_WEBHOOK=1` to call `setWebhook` too (the script reads that env flag).
+- `TELEGRAM_WEBHOOK_SECRET` becomes optional. Kept in `.env.example` for the day someone switches to webhook mode.
+- `__main__.py` chooses between `_serve_polling` and `_serve_webhook` based on `settings.bot_mode` (default `polling`).

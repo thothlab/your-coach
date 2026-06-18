@@ -5,6 +5,8 @@ from starlette.types import ASGIApp
 
 from .config import settings
 from .db import SessionLocal
+from .models import UserRole
+from .repositories import membership as membership_repo
 from .repositories import user as user_repo
 from .security.init_data import InitDataError, parse_and_validate
 
@@ -32,9 +34,11 @@ class TelegramAuthMiddleware(BaseHTTPMiddleware):
 
         async with SessionLocal() as session:
             user = await user_repo.get_by_telegram_id(session, init_data.user.id)
-
-        if user is None:
-            return JSONResponse({"detail": "user not registered"}, status_code=401)
+            if user is None:
+                return JSONResponse({"detail": "user not registered"}, status_code=401)
+            if user.role == UserRole.athlete:
+                # Auto-activate pending memberships on first authenticated call.
+                await membership_repo.activate_pending_for_athlete(session, user.id)
 
         request.state.current_user = user
         return await call_next(request)

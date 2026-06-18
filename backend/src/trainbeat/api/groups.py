@@ -1,0 +1,117 @@
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from ..db import get_session
+from ..models import GroupType, User, UserRole
+from ..repositories import group as group_repo
+from ..repositories import membership as membership_repo
+from .deps import current_user
+
+router = APIRouter(prefix="/api/groups", tags=["groups"])
+
+
+class GroupCreateRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    type: GroupType
+
+
+class GroupResponse(BaseModel):
+    id: int
+    name: str
+    type: str
+    active_member_count: int
+
+
+class MemberResponse(BaseModel):
+    athlete_id: int
+    name: str
+    status: str
+
+
+def _require_trainer(user: User) -> None:
+    if user.role != UserRole.trainer:
+        raise HTTPException(status_code=403, detail="trainer role required")
+
+
+@router.post("", response_model=GroupResponse, status_code=201)
+async def create_group(
+    body: GroupCreateRequest,
+    user: Annotated[User, Depends(current_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> GroupResponse:
+    _require_trainer(user)
+    group = await group_repo.create(
+        session, trainer_id=user.id, name=body.name, type=body.type
+    )
+    return GroupResponse(
+        id=group.id, name=group.name, type=group.type.value, active_member_count=0
+    )
+
+
+@router.get("", response_model=list[GroupResponse])
+async def list_groups(
+    user: Annotated[User, Depends(current_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> list[GroupResponse]:
+    _require_trainer(user)
+    groups = await group_repo.list_for_trainer(session, user.id)
+    out: list[GroupResponse] = []
+    for group in groups:
+        count = await group_repo.count_active_members(session, group.id)
+        out.append(
+            GroupResponse(
+                id=group.id,
+                name=group.name,
+                type=group.type.value,
+                active_member_count=count,
+            )
+        )
+    return out
+
+
+@router.get("/{group_id}/members", response_model=list[MemberResponse])
+async def list_members(
+    group_id: int,
+    user: Annotated[User, Depends(current_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> list[MemberResponse]:
+    _require_trainer(user)
+    group = await group_repo.get(session, group_id)
+    if group is None or group.trainer_id != user.id:
+        raise HTTPException(status_code=404, detail="group not found")
+    memberships = await membership_repo.list_for_group(session, group_id)
+    if not memberships:
+        return []
+    ids = {m.athlete_id for m in memberships}
+    rows = await session.scalars(select(User).where(User.id.in_(ids)))
+    names = {u.id: u.name for u in rows}
+    return [
+        MemberResponse(
+            athlete_id=m.athlete_id,
+            name=names.get(m.athlete_id, ""),
+            status=m.status.value,
+        )
+        for m in memberships
+    ]
+
+
+@router.delete("/{group_id}/members/{athlete_id}", status_code=204)
+async def remove_member(
+    group_id: int,
+    athlete_id: int,
+    user: Annotated[User, Depends(current_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> None:
+    _require_trainer(user)
+    group = await group_repo.get(session, group_id)
+    if group is None or group.trainer_id != user.id:
+        raise HTTPException(status_code=404, detail="group not found")
+    removed = await membership_repo.remove(
+        session, group_id=group_id, athlete_id=athlete_id
+    )
+    if not removed:
+        raise HTTPException(status_code=404, detail="active membership not found")

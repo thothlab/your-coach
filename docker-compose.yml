@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: trainbeat
+      POSTGRES_PASSWORD: trainbeat
+      POSTGRES_DB: trainbeat
+    ports:
+      - "5432:5432"
+    volumes:
+      - trainbeat-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trainbeat"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  trainbeat-pg:

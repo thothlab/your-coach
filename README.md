@@ -38,6 +38,30 @@ make fmt
 make build  # builds Mini-App and verifies the 250 KB gz bundle budget
 ```
 
+## Deploy (first-time)
+
+```bash
+fly auth login
+fly launch --no-deploy
+fly pg create --name trainbeat-db
+fly pg attach --app trainbeat trainbeat-db
+fly secrets set \
+  TELEGRAM_BOT_TOKEN=<...> \
+  TELEGRAM_WEBHOOK_SECRET=$(openssl rand -hex 32) \
+  TELEGRAM_BOT_USERNAME=trainbeat_bot \
+  TELEGRAM_WEBAPP_URL=https://<app>.fly.dev/ \
+  PUBLIC_BASE_URL=https://<app>.fly.dev
+fly deploy
+TELEGRAM_BOT_TOKEN=<...> \
+  TELEGRAM_WEBHOOK_SECRET=<the same secret> \
+  PUBLIC_BASE_URL=https://<app>.fly.dev \
+  python scripts/botfather_setup.py
+```
+
+Set the repository secret `FLY_API_TOKEN` (from `fly auth token`) and the
+optional `FLY_APP_NAME` repository variable so GitHub Actions can deploy on
+push to `main`.
+
 ## Layout
 
 ```

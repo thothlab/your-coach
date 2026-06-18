@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     )
 
     telegram_bot_token: str
+    telegram_bot_username: str = "trainbeat_bot"
     telegram_webapp_url: str = "https://localhost:5173"
     database_url: str
     app_env: str = "dev"

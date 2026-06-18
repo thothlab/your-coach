@@ -5,9 +5,11 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..config import settings
 from ..db import get_session
 from ..models import GroupType, User, UserRole
 from ..repositories import group as group_repo
+from ..repositories import invite as invite_repo
 from ..repositories import membership as membership_repo
 from .deps import current_user
 
@@ -30,6 +32,12 @@ class MemberResponse(BaseModel):
     athlete_id: int
     name: str
     status: str
+
+
+class InviteResponse(BaseModel):
+    token: str
+    url: str
+    expires_at: str
 
 
 def _require_trainer(user: User) -> None:
@@ -97,6 +105,27 @@ async def list_members(
         )
         for m in memberships
     ]
+
+
+@router.post("/{group_id}/invites", response_model=InviteResponse, status_code=201)
+async def create_invite(
+    group_id: int,
+    user: Annotated[User, Depends(current_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> InviteResponse:
+    _require_trainer(user)
+    group = await group_repo.get(session, group_id)
+    if group is None or group.trainer_id != user.id:
+        raise HTTPException(status_code=404, detail="group not found")
+    invite = await invite_repo.create(
+        session, trainer_id=user.id, group_id=group_id
+    )
+    url = f"https://t.me/{settings.telegram_bot_username}?start={invite.token}"
+    return InviteResponse(
+        token=invite.token,
+        url=url,
+        expires_at=invite.expires_at.isoformat(),
+    )
 
 
 @router.delete("/{group_id}/members/{athlete_id}", status_code=204)

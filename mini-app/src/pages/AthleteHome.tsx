@@ -1,10 +1,11 @@
 import { type Component, For, Show, createResource, createSignal } from "solid-js";
 import type { TrainBeatApi, User } from "../api";
+import type { Navigate } from "../lib/navigation";
 
 interface Props {
   api: TrainBeatApi;
   user: User;
-  onOpenSession: (sessionId: number) => void;
+  navigate: Navigate;
 }
 
 export const AthleteHome: Component<Props> = (props) => {
@@ -55,7 +56,12 @@ export const AthleteHome: Component<Props> = (props) => {
                   >
                     Decline
                   </button>{" "}
-                  <button type="button" onClick={() => props.onOpenSession(session.id)}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      props.navigate({ kind: "session-detail", sessionId: session.id })
+                    }
+                  >
                     Open
                   </button>
                 </div>

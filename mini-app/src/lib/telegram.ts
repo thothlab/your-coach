@@ -7,15 +7,40 @@ export interface TelegramThemeParams {
   secondary_bg_color?: string;
 }
 
+export interface TelegramBackButton {
+  show: () => void;
+  hide: () => void;
+  onClick: (cb: () => void) => void;
+  offClick: (cb: () => void) => void;
+}
+
 export interface TelegramWebApp {
   initData: string;
   initDataUnsafe: { user?: { id: number; first_name?: string } };
   version: string;
   themeParams: TelegramThemeParams;
   colorScheme: "light" | "dark";
+  BackButton: TelegramBackButton;
   ready: () => void;
   expand: () => void;
   onEvent: (event: string, cb: () => void) => void;
+}
+
+export function setBackButton(visible: boolean, onTap: () => void): () => void {
+  const app = getWebApp();
+  if (!app?.BackButton) {
+    return () => {};
+  }
+  if (visible) {
+    app.BackButton.show();
+    app.BackButton.onClick(onTap);
+    return () => {
+      app.BackButton.offClick(onTap);
+      app.BackButton.hide();
+    };
+  }
+  app.BackButton.hide();
+  return () => {};
 }
 
 declare global {

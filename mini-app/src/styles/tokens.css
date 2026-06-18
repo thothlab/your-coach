@@ -56,3 +56,34 @@ body {
 .page button:disabled {
   opacity: 0.5;
 }
+
+.page input,
+.page select,
+.page textarea {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--color-text) 30%, transparent);
+  background: var(--tg-theme-secondary-bg-color, transparent);
+  color: var(--color-text);
+  font: inherit;
+  width: 100%;
+  max-width: 320px;
+}
+
+.banner-error {
+  background: color-mix(in srgb, tomato 18%, transparent);
+  border: 1px solid tomato;
+  padding: 8px;
+  border-radius: 8px;
+  margin: 8px 0;
+  font-size: 13px;
+}
+
+.banner-success {
+  background: color-mix(in srgb, mediumseagreen 18%, transparent);
+  border: 1px solid mediumseagreen;
+  padding: 8px;
+  border-radius: 8px;
+  margin: 8px 0;
+  font-size: 13px;
+}

@@ -5,14 +5,24 @@ import {
   Show,
   Suspense,
   Switch,
+  createEffect,
   createResource,
   createSignal,
+  onCleanup,
 } from "solid-js";
 import { TrainBeatApi, type User } from "./api";
-import { getInitData, getWebApp } from "./lib/telegram";
+import type { Page } from "./lib/navigation";
+import { getInitData, getWebApp, setBackButton } from "./lib/telegram";
 import { AthleteHome } from "./pages/AthleteHome";
+import { BroadcastCompose } from "./pages/BroadcastCompose";
+import { ExerciseCreate } from "./pages/ExerciseCreate";
+import { Exercises } from "./pages/Exercises";
+import { GroupCreate } from "./pages/GroupCreate";
+import { SessionCreate } from "./pages/SessionCreate";
 import { SessionDetail } from "./pages/SessionDetail";
 import { TrainerHome } from "./pages/TrainerHome";
+import { WorkoutTemplateCreate } from "./pages/WorkoutTemplateCreate";
+import { Workouts } from "./pages/Workouts";
 
 async function bootstrap(): Promise<{ api: TrainBeatApi; user: User }> {
   const initData = getInitData();
@@ -40,7 +50,27 @@ function applyTheme(): void {
 export const App: Component = () => {
   applyTheme();
   const [session] = createResource(bootstrap);
-  const [openSessionId, setOpenSessionId] = createSignal<number | null>(null);
+  const [stack, setStack] = createSignal<Page[]>([{ kind: "home" }]);
+
+  const top = (): Page => stack()[stack().length - 1];
+
+  function navigate(page: Page): void {
+    setStack((prev) => [...prev, page]);
+  }
+
+  function back(): void {
+    setStack((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
+  }
+
+  function home(): void {
+    setStack([{ kind: "home" }]);
+  }
+
+  createEffect(() => {
+    const isRoot = stack().length === 1;
+    const cleanup = setBackButton(!isRoot, back);
+    onCleanup(cleanup);
+  });
 
   return (
     <ErrorBoundary
@@ -63,26 +93,55 @@ export const App: Component = () => {
       >
         <Show when={session()} keyed>
           {(s) => (
-            <Show
-              when={openSessionId() !== null}
-              fallback={
+            <Switch>
+              <Match when={top().kind === "home"}>
                 <Switch>
                   <Match when={s.user.role === "trainer"}>
-                    <TrainerHome api={s.api} user={s.user} onOpenSession={setOpenSessionId} />
+                    <TrainerHome api={s.api} user={s.user} navigate={navigate} />
                   </Match>
                   <Match when={s.user.role === "athlete"}>
-                    <AthleteHome api={s.api} user={s.user} onOpenSession={setOpenSessionId} />
+                    <AthleteHome api={s.api} user={s.user} navigate={navigate} />
                   </Match>
                 </Switch>
-              }
-            >
-              <SessionDetail
-                api={s.api}
-                user={s.user}
-                sessionId={openSessionId() as number}
-                onBack={() => setOpenSessionId(null)}
-              />
-            </Show>
+              </Match>
+              <Match when={top().kind === "group-new"}>
+                <GroupCreate api={s.api} onBack={back} onCreated={home} />
+              </Match>
+              <Match when={top().kind === "exercises"}>
+                <Exercises
+                  api={s.api}
+                  onBack={back}
+                  onNew={() => navigate({ kind: "exercise-new" })}
+                />
+              </Match>
+              <Match when={top().kind === "exercise-new"}>
+                <ExerciseCreate api={s.api} onBack={back} onCreated={back} />
+              </Match>
+              <Match when={top().kind === "workouts"}>
+                <Workouts
+                  api={s.api}
+                  onBack={back}
+                  onNew={() => navigate({ kind: "workout-new" })}
+                />
+              </Match>
+              <Match when={top().kind === "workout-new"}>
+                <WorkoutTemplateCreate api={s.api} onBack={back} onCreated={back} />
+              </Match>
+              <Match when={top().kind === "session-new"}>
+                <SessionCreate api={s.api} onBack={back} onCreated={home} />
+              </Match>
+              <Match when={top().kind === "broadcast"}>
+                <BroadcastCompose api={s.api} onBack={back} />
+              </Match>
+              <Match when={(() => top().kind === "session-detail")()}>
+                <SessionDetail
+                  api={s.api}
+                  user={s.user}
+                  sessionId={(top() as { sessionId: number }).sessionId}
+                  onBack={back}
+                />
+              </Match>
+            </Switch>
           )}
         </Show>
       </Suspense>

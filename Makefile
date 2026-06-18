@@ -1,4 +1,4 @@
-.PHONY: install dev test lint fmt build db-up db-down clean
+.PHONY: install dev test lint fmt build db-up db-down migrate migrate-down clean
 
 PY := backend/.venv/bin/python
 PIP := backend/.venv/bin/pip
@@ -37,6 +37,12 @@ fmt:
 
 build:
 	cd mini-app && npm run build && npm run check-size
+
+migrate: db-up
+	cd backend && .venv/bin/alembic upgrade head
+
+migrate-down:
+	cd backend && .venv/bin/alembic downgrade -1
 
 clean:
 	rm -rf backend/.venv backend/.pytest_cache backend/.ruff_cache backend/src/trainbeat.egg-info

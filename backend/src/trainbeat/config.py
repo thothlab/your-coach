@@ -15,8 +15,12 @@ class Settings(BaseSettings):
     telegram_bot_token: str
     telegram_bot_username: str = "trainbeat_bot"
     telegram_webapp_url: str = "https://localhost:5173"
+    telegram_webhook_secret: str = "dev-only-secret"
+    public_base_url: str = "http://localhost:8000"
     database_url: str
     app_env: str = "dev"
+    mini_app_dist: str = "mini-app/dist"
+    scheduler_interval_minutes: int = 15
 
 
 settings = Settings()

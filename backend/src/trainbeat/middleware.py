@@ -11,7 +11,7 @@ from .repositories import user as user_repo
 from .security.init_data import InitDataError, parse_and_validate
 
 PROTECTED_PREFIX = "/api"
-UNPROTECTED_API_PATHS = frozenset({"/api/auth/telegram"})
+UNPROTECTED_API_PATHS = frozenset({"/api/auth/telegram", "/api/telegram/webhook"})
 
 
 class TelegramAuthMiddleware(BaseHTTPMiddleware):

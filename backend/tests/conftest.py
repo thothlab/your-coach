@@ -9,7 +9,7 @@ from collections.abc import AsyncIterator
 # regardless of any TELEGRAM_BOT_TOKEN inherited from the CI environment.
 _TEST_DB_URL = "postgresql+asyncpg://trainbeat:trainbeat@localhost:5432/trainbeat_test"
 os.environ["DATABASE_URL"] = _TEST_DB_URL
-os.environ["TELEGRAM_BOT_TOKEN"] = "test-bot-token-7777777777"
+os.environ["TELEGRAM_BOT_TOKEN"] = "1234567890:test-bot-token-7777777777"
 os.environ.setdefault("APP_ENV", "test")
 os.environ.setdefault("TELEGRAM_WEBAPP_URL", "https://localhost:5173")
 

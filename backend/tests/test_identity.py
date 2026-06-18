@@ -7,7 +7,7 @@ from trainbeat.models import UserRole
 from trainbeat.repositories import user as user_repo
 from trainbeat.security.init_data import build_init_data
 
-BOT_TOKEN = "test-bot-token-7777777777"
+BOT_TOKEN = "1234567890:test-bot-token-7777777777"
 
 
 @pytest.mark.asyncio

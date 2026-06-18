@@ -4,7 +4,7 @@ import time
 
 from trainbeat.security.init_data import build_init_data
 
-BOT_TOKEN = "test-bot-token-7777777777"
+BOT_TOKEN = "1234567890:test-bot-token-7777777777"
 
 
 def init_data_header(telegram_id: int, first_name: str = "Test", **extra) -> dict[str, str]:

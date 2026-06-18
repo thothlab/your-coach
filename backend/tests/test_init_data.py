@@ -8,7 +8,7 @@ from trainbeat.security.init_data import (
     parse_and_validate,
 )
 
-BOT_TOKEN = "test-bot-token-7777777777"
+BOT_TOKEN = "1234567890:test-bot-token-7777777777"
 
 
 def _sample_user() -> dict:

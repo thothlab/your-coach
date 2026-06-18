@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from .api import auth as auth_api
 from .api import groups as groups_api
 from .api import me as me_api
+from .api import sessions as sessions_api
 from .api import workouts as workouts_api
 from .config import settings
 from .middleware import TelegramAuthMiddleware
@@ -14,6 +15,7 @@ app.include_router(me_api.router)
 app.include_router(groups_api.router)
 app.include_router(workouts_api.exercises_router)
 app.include_router(workouts_api.workouts_router)
+app.include_router(sessions_api.router)
 
 
 @app.get("/healthz")

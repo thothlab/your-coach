@@ -1,4 +1,7 @@
-const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
+// Empty default → fetch hits same origin as the served Mini-App. In production
+// this is https://trainbeat.devipad.ru/api/...; in dev set VITE_API_BASE to
+// the local FastAPI URL (e.g. http://localhost:8000) when serving Vite separately.
+const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
 export interface User {
   id: number;

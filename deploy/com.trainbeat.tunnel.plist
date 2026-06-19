@@ -12,6 +12,10 @@
   the `tunnel` user on the VPS already authorized in
   /home/tunnel/.ssh/authorized_keys with no command/options restrictions
   beyond what the other tunnels already use.
+
+  IdentityFile is set explicitly because launchd runs without an SSH agent
+  and without the user shell's environment — ~/.ssh/config aliases are not
+  honored. Adjust the path if your key lives elsewhere.
 -->
 <plist version="1.0">
 <dict>
@@ -24,7 +28,9 @@
     <string>-o</string><string>ServerAliveInterval=30</string>
     <string>-o</string><string>ServerAliveCountMax=3</string>
     <string>-o</string><string>ExitOnForwardFailure=yes</string>
-    <string>-R</string><string>8100:localhost:8000</string>
+    <string>-o</string><string>StrictHostKeyChecking=accept-new</string>
+    <string>-i</string><string>/Users/shaukat/.ssh/id_ed25519_tunnel</string>
+    <string>-R</string><string>127.0.0.1:8100:localhost:8000</string>
     <string>-p</string><string>58222</string>
     <string>tunnel@153.80.185.242</string>
   </array>

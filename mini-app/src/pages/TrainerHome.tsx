@@ -23,7 +23,7 @@ export const TrainerHome: Component<Props> = (props) => {
         <h2>Groups</h2>
         <Show when={groups.loading}>Loading…</Show>
         <Show when={!groups.loading && (groups()?.length ?? 0) === 0}>
-          <p>No groups yet. Use the bot's /invite command or POST /api/groups.</p>
+          <p>No groups yet. Tap "Create group" above to make your first one.</p>
         </Show>
         <ul>
           <For each={groups()}>

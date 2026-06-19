@@ -20,6 +20,18 @@ body {
   padding: 16px;
   max-width: 720px;
   margin: 0 auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: 12px;
+  }
+}
+
+.page button {
+  margin: 4px 4px 4px 0;
 }
 
 .page h1 {

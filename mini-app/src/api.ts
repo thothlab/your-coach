@@ -75,6 +75,10 @@ export class TrainBeatApi {
     return this.request("POST", `/api/groups/${groupId}/broadcast`, { text });
   }
 
+  createInvite(groupId: number): Promise<{ token: string; url: string; expires_at: string }> {
+    return this.request("POST", `/api/groups/${groupId}/invites`);
+  }
+
   listExercises(): Promise<Array<{ id: number; name: string; unit: string }>> {
     return this.request("GET", "/api/exercises");
   }

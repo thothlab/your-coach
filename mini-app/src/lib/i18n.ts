@@ -134,6 +134,14 @@ const en: Dict = {
   "broadcast.rateLimit": "Rate limit reached — try again later",
   "broadcast.charCount": "{len} / 4000",
 
+  "invite.button": "Invite",
+  "invite.title": "Invite to {group}",
+  "invite.hint": "The athlete scans the QR or opens the link to join.",
+  "invite.copy": "Copy link",
+  "invite.copied": "Copied ✓",
+  "invite.expires": "Valid until {date}",
+  "invite.regenerate": "New link",
+
   "weekday.MO": "Mon",
   "weekday.TU": "Tue",
   "weekday.WE": "Wed",
@@ -243,6 +251,14 @@ const ru: Dict = {
   "broadcast.sent": "Отправлено участникам: {count}",
   "broadcast.rateLimit": "Превышен лимит — попробуйте позже",
   "broadcast.charCount": "{len} / 4000",
+
+  "invite.button": "Пригласить",
+  "invite.title": "Пригласить в «{group}»",
+  "invite.hint": "Спортсмен сканирует QR или открывает ссылку, чтобы вступить.",
+  "invite.copy": "Скопировать ссылку",
+  "invite.copied": "Скопировано ✓",
+  "invite.expires": "Действует до {date}",
+  "invite.regenerate": "Новая ссылка",
 
   "weekday.MO": "Пн",
   "weekday.TU": "Вт",

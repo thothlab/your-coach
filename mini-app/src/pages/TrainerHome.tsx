@@ -58,6 +58,20 @@ export const TrainerHome: Component<Props> = (props) => {
                     count: group.active_member_count,
                   })}
                 </small>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      props.navigate({
+                        kind: "invite",
+                        groupId: group.id,
+                        groupName: group.name,
+                      })
+                    }
+                  >
+                    {t("invite.button")}
+                  </button>
+                </div>
               </li>
             )}
           </For>

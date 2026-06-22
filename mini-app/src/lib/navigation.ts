@@ -7,6 +7,7 @@ export type Page =
   | { kind: "workout-new" }
   | { kind: "session-new" }
   | { kind: "broadcast" }
+  | { kind: "invite"; groupId: number; groupName: string }
   | { kind: "session-detail"; sessionId: number };
 
 export type Navigate = (page: Page) => void;

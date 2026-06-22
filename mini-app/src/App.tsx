@@ -19,6 +19,7 @@ import { BroadcastCompose } from "./pages/BroadcastCompose";
 import { ExerciseCreate } from "./pages/ExerciseCreate";
 import { Exercises } from "./pages/Exercises";
 import { GroupCreate } from "./pages/GroupCreate";
+import { InvitePage } from "./pages/InvitePage";
 import { SessionCreate } from "./pages/SessionCreate";
 import { SessionDetail } from "./pages/SessionDetail";
 import { TrainerHome } from "./pages/TrainerHome";
@@ -133,6 +134,14 @@ export const App: Component = () => {
               </Match>
               <Match when={top().kind === "broadcast"}>
                 <BroadcastCompose api={s.api} onBack={back} />
+              </Match>
+              <Match when={top().kind === "invite"}>
+                <InvitePage
+                  api={s.api}
+                  groupId={(top() as { groupId: number }).groupId}
+                  groupName={(top() as { groupName: string }).groupName}
+                  onBack={back}
+                />
               </Match>
               <Match when={(() => top().kind === "session-detail")()}>
                 <SessionDetail

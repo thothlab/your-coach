@@ -1,5 +1,6 @@
 import { type Component, For, Show, createResource } from "solid-js";
 import type { TrainBeatApi } from "../api";
+import { t } from "../lib/i18n";
 
 interface Props {
   api: TrainBeatApi;
@@ -13,13 +14,13 @@ export const Exercises: Component<Props> = (props) => {
   return (
     <main class="page">
       <button type="button" onClick={props.onBack}>
-        ← back
+        {t("common.back")}
       </button>
-      <h1>Exercises</h1>
+      <h1>{t("trainer.exercises")}</h1>
       <button type="button" onClick={props.onNew}>
-        + New exercise
+        {t("exercises.new")}
       </button>
-      <Show when={exercises.loading}>Loading…</Show>
+      <Show when={exercises.loading}>{t("common.loading")}</Show>
       <ul>
         <For each={exercises()}>
           {(ex) => (

@@ -40,7 +40,11 @@ def _mount_mini_app() -> None:
 
     @app.get("/", include_in_schema=False)
     async def root() -> FileResponse:
-        return FileResponse(str(index))
+        # no-cache forces the webview to revalidate index.html via ETag on every
+        # open, so a redeploy's new (content-hashed) asset is picked up instead of
+        # a stale cached shell. Assets under /assets are content-hashed and safe to
+        # cache. This is the durable fix for "mobile Telegram shows the old bundle".
+        return FileResponse(str(index), headers={"Cache-Control": "no-cache"})
 
 
 _mount_mini_app()

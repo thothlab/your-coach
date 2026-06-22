@@ -1,6 +1,7 @@
 import { type Component, For, Show, createResource, createSignal } from "solid-js";
 import type { TrainBeatApi } from "../api";
 import { errorMessage, isApiError } from "../lib/api-error";
+import { t } from "../lib/i18n";
 import { Field, FormShell } from "../ui/FormShell";
 
 interface Props {
@@ -20,21 +21,21 @@ export const BroadcastCompose: Component<Props> = (props) => {
     setError(null);
     setSuccess(null);
     if (groupId() == null) {
-      setError("Pick a group");
+      setError(t("validation.pickGroup"));
       return;
     }
     if (!text().trim()) {
-      setError("Message text is required");
+      setError(t("validation.messageRequired"));
       return;
     }
     setSubmitting(true);
     try {
       const result = await props.api.sendBroadcast(groupId() as number, text().trim());
-      setSuccess(`Sent to ${result.recipient_count} member(s)`);
+      setSuccess(t("broadcast.sent", { count: result.recipient_count }));
       setText("");
     } catch (err) {
       if (isApiError(err) && err.status === 429) {
-        setError("Rate limit reached — try again later");
+        setError(t("broadcast.rateLimit"));
       } else {
         setError(errorMessage(err));
       }
@@ -45,35 +46,35 @@ export const BroadcastCompose: Component<Props> = (props) => {
 
   return (
     <FormShell
-      title="Broadcast"
+      title={t("trainer.broadcast")}
       onBack={props.onBack}
       error={error()}
       submitting={submitting()}
-      submitLabel="Send"
+      submitLabel={t("common.send")}
       onSubmit={submit}
     >
       <Show when={success()}>
         <div class="banner-success">{success()}</div>
       </Show>
-      <Field label="Group">
+      <Field label={t("field.group")}>
         <select
           value={groupId() ?? ""}
           onChange={(e) => setGroupId(e.currentTarget.value ? Number(e.currentTarget.value) : null)}
         >
-          <option value="">— pick —</option>
+          <option value="">{t("common.pick")}</option>
           <For each={groups()}>{(g) => <option value={g.id}>{g.name}</option>}</For>
         </select>
       </Field>
-      <Field label="Message">
+      <Field label={t("field.message")}>
         <textarea
           value={text()}
           onInput={(e) => setText(e.currentTarget.value)}
           rows="5"
-          placeholder="Bring water, see you at 7."
+          placeholder={t("placeholder.broadcast")}
         />
       </Field>
       <div>
-        <small>{text().length} / 4000</small>
+        <small>{t("broadcast.charCount", { len: text().length })}</small>
       </div>
     </FormShell>
   );

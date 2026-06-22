@@ -1,6 +1,8 @@
 import { type Component, For, Show, createResource, createSignal } from "solid-js";
 import type { TrainBeatApi, User } from "../api";
+import { t } from "../lib/i18n";
 import type { Navigate } from "../lib/navigation";
+import { LangSwitch } from "../ui/LangSwitch";
 
 interface Props {
   api: TrainBeatApi;
@@ -28,13 +30,14 @@ export const AthleteHome: Component<Props> = (props) => {
 
   return (
     <main class="page">
-      <h1>Hi, {props.user.name}</h1>
+      <LangSwitch />
+      <h1>{t("athlete.greeting", { name: props.user.name })}</h1>
 
       <section>
-        <h2>Upcoming sessions</h2>
-        <Show when={sessions.loading}>Loading…</Show>
+        <h2>{t("athlete.upcoming")}</h2>
+        <Show when={sessions.loading}>{t("common.loading")}</Show>
         <Show when={!sessions.loading && (sessions()?.length ?? 0) === 0}>
-          <p>No upcoming sessions. Enjoy the rest day.</p>
+          <p>{t("athlete.noSessions")}</p>
         </Show>
         <ul>
           <For each={sessions()}>
@@ -47,14 +50,14 @@ export const AthleteHome: Component<Props> = (props) => {
                     disabled={pending() === session.id}
                     onClick={() => confirm(session.id, "confirmed")}
                   >
-                    Confirm
+                    {t("common.confirm")}
                   </button>{" "}
                   <button
                     type="button"
                     disabled={pending() === session.id}
                     onClick={() => confirm(session.id, "declined")}
                   >
-                    Decline
+                    {t("common.decline")}
                   </button>{" "}
                   <button
                     type="button"
@@ -62,7 +65,7 @@ export const AthleteHome: Component<Props> = (props) => {
                       props.navigate({ kind: "session-detail", sessionId: session.id })
                     }
                   >
-                    Open
+                    {t("common.open")}
                   </button>
                 </div>
               </li>

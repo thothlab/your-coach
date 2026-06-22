@@ -82,6 +82,27 @@ body {
   max-width: 320px;
 }
 
+.lang-switch {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.lang-switch button {
+  padding: 4px 10px;
+  font-size: 12px;
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid color-mix(in srgb, var(--color-text) 25%, transparent);
+}
+
+.lang-switch button.active {
+  background: var(--color-accent);
+  color: var(--tg-theme-button-text-color, #ffffff);
+  border-color: var(--color-accent);
+}
+
 .banner-error {
   background: color-mix(in srgb, tomato 18%, transparent);
   border: 1px solid tomato;

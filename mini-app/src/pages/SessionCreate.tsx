@@ -1,6 +1,7 @@
 import { type Component, For, Show, createResource, createSignal } from "solid-js";
 import type { TrainBeatApi } from "../api";
 import { errorMessage } from "../lib/api-error";
+import { t } from "../lib/i18n";
 import { Field, FormShell } from "../ui/FormShell";
 
 interface Props {
@@ -9,15 +10,8 @@ interface Props {
   onCreated: () => void;
 }
 
-const WEEKDAYS: Array<{ code: string; label: string }> = [
-  { code: "MO", label: "Mon" },
-  { code: "TU", label: "Tue" },
-  { code: "WE", label: "Wed" },
-  { code: "TH", label: "Thu" },
-  { code: "FR", label: "Fri" },
-  { code: "SA", label: "Sat" },
-  { code: "SU", label: "Sun" },
-];
+// Codes only — labels are resolved through t() so they react to a locale switch.
+const WEEKDAY_CODES = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
 
 export const SessionCreate: Component<Props> = (props) => {
   const [groups] = createResource(() => props.api.listGroups());
@@ -43,18 +37,18 @@ export const SessionCreate: Component<Props> = (props) => {
   async function submit(): Promise<void> {
     setError(null);
     if (groupId() == null) {
-      setError("Pick a group");
+      setError(t("validation.pickGroup"));
       return;
     }
     if (!start()) {
-      setError("Pick a start time");
+      setError(t("validation.pickStart"));
       return;
     }
     let rrule: string | undefined;
     if (recurring()) {
       const picked = [...days()];
       if (picked.length === 0) {
-        setError("Pick at least one weekday");
+        setError(t("validation.pickWeekday"));
         return;
       }
       rrule = `FREQ=WEEKLY;BYDAY=${picked.join(",")}`;
@@ -78,40 +72,40 @@ export const SessionCreate: Component<Props> = (props) => {
 
   return (
     <FormShell
-      title="New session"
+      title={t("trainer.newSession")}
       onBack={props.onBack}
       error={error()}
       submitting={submitting()}
       onSubmit={submit}
     >
-      <Field label="Group">
+      <Field label={t("field.group")}>
         <select
           value={groupId() ?? ""}
           onChange={(e) => setGroupId(e.currentTarget.value ? Number(e.currentTarget.value) : null)}
         >
-          <option value="">— pick —</option>
+          <option value="">{t("common.pick")}</option>
           <For each={groups()}>{(g) => <option value={g.id}>{g.name}</option>}</For>
         </select>
       </Field>
-      <Field label="Workout template (optional)">
+      <Field label={t("field.workoutTemplateOpt")}>
         <select
           value={templateId() ?? ""}
           onChange={(e) =>
             setTemplateId(e.currentTarget.value ? Number(e.currentTarget.value) : null)
           }
         >
-          <option value="">— none —</option>
-          <For each={templates()}>{(t) => <option value={t.id}>{t.name}</option>}</For>
+          <option value="">{t("common.none")}</option>
+          <For each={templates()}>{(tpl) => <option value={tpl.id}>{tpl.name}</option>}</For>
         </select>
       </Field>
-      <Field label="Start">
+      <Field label={t("field.start")}>
         <input
           type="datetime-local"
           value={start()}
           onInput={(e) => setStart(e.currentTarget.value)}
         />
       </Field>
-      <Field label="Duration (min)">
+      <Field label={t("field.durationMin")}>
         <input
           type="number"
           min="5"
@@ -120,7 +114,7 @@ export const SessionCreate: Component<Props> = (props) => {
           onInput={(e) => setDuration(Number(e.currentTarget.value))}
         />
       </Field>
-      <Field label="Recurring weekly">
+      <Field label={t("field.recurringWeekly")}>
         <input
           type="checkbox"
           checked={recurring()}
@@ -128,17 +122,17 @@ export const SessionCreate: Component<Props> = (props) => {
         />
       </Field>
       <Show when={recurring()}>
-        <Field label="Weekdays">
+        <Field label={t("field.weekdays")}>
           <div>
-            <For each={WEEKDAYS}>
-              {(d) => (
+            <For each={WEEKDAY_CODES}>
+              {(code) => (
                 <label style={{ "margin-right": "8px" }}>
                   <input
                     type="checkbox"
-                    checked={days().has(d.code)}
-                    onChange={() => toggleDay(d.code)}
+                    checked={days().has(code)}
+                    onChange={() => toggleDay(code)}
                   />{" "}
-                  {d.label}
+                  {t(`weekday.${code}`)}
                 </label>
               )}
             </For>

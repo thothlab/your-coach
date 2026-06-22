@@ -16,7 +16,7 @@ export interface TelegramBackButton {
 
 export interface TelegramWebApp {
   initData: string;
-  initDataUnsafe: { user?: { id: number; first_name?: string } };
+  initDataUnsafe: { user?: { id: number; first_name?: string; language_code?: string } };
   version: string;
   themeParams: TelegramThemeParams;
   colorScheme: "light" | "dark";

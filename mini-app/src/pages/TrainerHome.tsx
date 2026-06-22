@@ -1,6 +1,8 @@
 import { type Component, For, Show, createResource } from "solid-js";
 import type { TrainBeatApi, User } from "../api";
+import { t } from "../lib/i18n";
 import type { Navigate } from "../lib/navigation";
+import { LangSwitch } from "../ui/LangSwitch";
 
 interface Props {
   api: TrainBeatApi;
@@ -18,31 +20,32 @@ export const TrainerHome: Component<Props> = (props) => {
 
   return (
     <main class="page">
+      <LangSwitch />
       <h1>TrainBeat · {props.user.name}</h1>
 
       <nav>
         <button type="button" onClick={() => props.navigate({ kind: "group-new" })}>
-          Create group
+          {t("trainer.createGroup")}
         </button>
         <button type="button" onClick={() => props.navigate({ kind: "session-new" })}>
-          New session
+          {t("trainer.newSession")}
         </button>
         <button type="button" onClick={() => props.navigate({ kind: "exercises" })}>
-          Exercises
+          {t("trainer.exercises")}
         </button>
         <button type="button" onClick={() => props.navigate({ kind: "workouts" })}>
-          Workouts
+          {t("trainer.workouts")}
         </button>
         <button type="button" onClick={() => props.navigate({ kind: "broadcast" })}>
-          Broadcast
+          {t("trainer.broadcast")}
         </button>
       </nav>
 
       <section>
-        <h2>Groups</h2>
-        <Show when={groups.loading}>Loading…</Show>
+        <h2>{t("trainer.groups")}</h2>
+        <Show when={groups.loading}>{t("common.loading")}</Show>
         <Show when={!groups.loading && (groups()?.length ?? 0) === 0}>
-          <p>No groups yet. Tap "Create group" above to make your first one.</p>
+          <p>{t("trainer.noGroups")}</p>
         </Show>
         <ul>
           <For each={groups()}>
@@ -50,7 +53,10 @@ export const TrainerHome: Component<Props> = (props) => {
               <li>
                 <strong>{group.name}</strong>{" "}
                 <small>
-                  ({group.type}, {group.active_member_count} active)
+                  {t("trainer.groupMeta", {
+                    type: t(`groupType.${group.type}`),
+                    count: group.active_member_count,
+                  })}
                 </small>
               </li>
             )}
@@ -59,27 +65,28 @@ export const TrainerHome: Component<Props> = (props) => {
       </section>
 
       <section>
-        <h2>Upcoming (14 days)</h2>
-        <Show when={sessions.loading}>Loading…</Show>
+        <h2>{t("trainer.upcoming")}</h2>
+        <Show when={sessions.loading}>{t("common.loading")}</Show>
         <Show when={!sessions.loading && (sessions()?.length ?? 0) === 0}>
-          <p>No scheduled sessions in the next 14 days.</p>
+          <p>{t("trainer.noSessions")}</p>
         </Show>
         <ul>
           <For each={sessions()}>
             {(session) => (
               <li>
                 <div>
-                  {new Date(session.scheduled_at).toLocaleString()} · {session.duration_min} min
+                  {new Date(session.scheduled_at).toLocaleString()} ·{" "}
+                  {t("common.minutes", { n: session.duration_min })}
                   <Show when={session.recurrence_rule}>
                     {" "}
-                    <small>· recurring</small>
+                    <small>· {t("session.recurring")}</small>
                   </Show>
                 </div>
                 <button
                   type="button"
                   onClick={() => props.navigate({ kind: "session-detail", sessionId: session.id })}
                 >
-                  Open
+                  {t("common.open")}
                 </button>
               </li>
             )}

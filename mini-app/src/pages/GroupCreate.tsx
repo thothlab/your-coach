@@ -1,6 +1,7 @@
 import { type Component, createSignal } from "solid-js";
 import type { TrainBeatApi } from "../api";
 import { errorMessage } from "../lib/api-error";
+import { t } from "../lib/i18n";
 import { Field, FormShell } from "../ui/FormShell";
 
 interface Props {
@@ -18,7 +19,7 @@ export const GroupCreate: Component<Props> = (props) => {
   async function submit(): Promise<void> {
     setError(null);
     if (!name().trim()) {
-      setError("Name is required");
+      setError(t("validation.nameRequired"));
       return;
     }
     setSubmitting(true);
@@ -34,27 +35,27 @@ export const GroupCreate: Component<Props> = (props) => {
 
   return (
     <FormShell
-      title="Create group"
+      title={t("trainer.createGroup")}
       onBack={props.onBack}
       error={error()}
       submitting={submitting()}
       onSubmit={submit}
     >
-      <Field label="Name">
+      <Field label={t("field.name")}>
         <input
           type="text"
           value={name()}
           onInput={(e) => setName(e.currentTarget.value)}
-          placeholder="Monday strength"
+          placeholder={t("placeholder.groupName")}
         />
       </Field>
-      <Field label="Type">
+      <Field label={t("field.type")}>
         <select
           value={type()}
           onChange={(e) => setType(e.currentTarget.value as "group" | "personal")}
         >
-          <option value="group">Group</option>
-          <option value="personal">Personal (1 athlete)</option>
+          <option value="group">{t("groupType.group")}</option>
+          <option value="personal">{t("groupType.personalOption")}</option>
         </select>
       </Field>
     </FormShell>

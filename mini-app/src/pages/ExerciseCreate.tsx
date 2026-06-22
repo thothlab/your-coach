@@ -1,6 +1,7 @@
 import { type Component, createSignal } from "solid-js";
 import type { TrainBeatApi } from "../api";
 import { errorMessage } from "../lib/api-error";
+import { t } from "../lib/i18n";
 import { Field, FormShell } from "../ui/FormShell";
 
 interface Props {
@@ -20,7 +21,7 @@ export const ExerciseCreate: Component<Props> = (props) => {
   async function submit(): Promise<void> {
     setError(null);
     if (!name().trim()) {
-      setError("Name is required");
+      setError(t("validation.nameRequired"));
       return;
     }
     setSubmitting(true);
@@ -36,26 +37,26 @@ export const ExerciseCreate: Component<Props> = (props) => {
 
   return (
     <FormShell
-      title="New exercise"
+      title={t("exercises.newTitle")}
       onBack={props.onBack}
       error={error()}
       submitting={submitting()}
       onSubmit={submit}
     >
-      <Field label="Name">
+      <Field label={t("field.name")}>
         <input
           type="text"
           value={name()}
           onInput={(e) => setName(e.currentTarget.value)}
-          placeholder="Back squat"
+          placeholder={t("placeholder.exerciseName")}
         />
       </Field>
-      <Field label="Unit">
+      <Field label={t("field.unit")}>
         <select value={unit()} onChange={(e) => setUnit(e.currentTarget.value as Unit)}>
-          <option value="kg">kg (weighted)</option>
-          <option value="reps">reps (bodyweight)</option>
-          <option value="seconds">seconds (timed)</option>
-          <option value="meters">meters (distance)</option>
+          <option value="kg">{t("unit.kg")}</option>
+          <option value="reps">{t("unit.reps")}</option>
+          <option value="seconds">{t("unit.seconds")}</option>
+          <option value="meters">{t("unit.meters")}</option>
         </select>
       </Field>
     </FormShell>

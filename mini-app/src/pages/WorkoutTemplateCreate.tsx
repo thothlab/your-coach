@@ -1,6 +1,7 @@
 import { type Component, For, Show, createResource, createSignal } from "solid-js";
 import type { TrainBeatApi } from "../api";
 import { errorMessage } from "../lib/api-error";
+import { t } from "../lib/i18n";
 import { Field, FormShell } from "../ui/FormShell";
 
 interface Props {
@@ -48,12 +49,12 @@ export const WorkoutTemplateCreate: Component<Props> = (props) => {
   async function submit(): Promise<void> {
     setError(null);
     if (!name().trim()) {
-      setError("Name is required");
+      setError(t("validation.nameRequired"));
       return;
     }
     const drafts = items();
     if (drafts.some((it) => it.exercise_id == null)) {
-      setError("Pick an exercise for every item");
+      setError(t("validation.pickExerciseEvery"));
       return;
     }
     setSubmitting(true);
@@ -78,24 +79,24 @@ export const WorkoutTemplateCreate: Component<Props> = (props) => {
 
   return (
     <FormShell
-      title="New workout template"
+      title={t("workouts.newTitle")}
       onBack={props.onBack}
       error={error()}
       submitting={submitting()}
       onSubmit={submit}
     >
-      <Field label="Name">
+      <Field label={t("field.name")}>
         <input type="text" value={name()} onInput={(e) => setName(e.currentTarget.value)} />
       </Field>
 
-      <Show when={!exercises.loading} fallback={<p>Loading exercises…</p>}>
-        <h2>Items</h2>
+      <Show when={!exercises.loading} fallback={<p>{t("workouts.loadingExercises")}</p>}>
+        <h2>{t("workouts.items")}</h2>
         <For each={items()}>
           {(item, index) => {
             const unit = () => unitOf(item.exercise_id);
             return (
               <div style={{ "border-bottom": "1px solid #ccc", padding: "8px 0" }}>
-                <Field label={`Item ${index() + 1} · Exercise`}>
+                <Field label={t("workouts.itemExercise", { n: index() + 1 })}>
                   <select
                     value={item.exercise_id ?? ""}
                     onChange={(e) =>
@@ -104,7 +105,7 @@ export const WorkoutTemplateCreate: Component<Props> = (props) => {
                       })
                     }
                   >
-                    <option value="">— pick —</option>
+                    <option value="">{t("common.pick")}</option>
                     <For each={exercises()}>
                       {(ex) => (
                         <option value={ex.id}>
@@ -114,7 +115,7 @@ export const WorkoutTemplateCreate: Component<Props> = (props) => {
                     </For>
                   </select>
                 </Field>
-                <Field label="Sets">
+                <Field label={t("field.sets")}>
                   <input
                     type="number"
                     min="1"
@@ -124,7 +125,7 @@ export const WorkoutTemplateCreate: Component<Props> = (props) => {
                   />
                 </Field>
                 <Show when={unit() === "reps" || unit() === "kg" || unit() === "meters"}>
-                  <Field label="Target reps">
+                  <Field label={t("field.targetReps")}>
                     <input
                       type="number"
                       min="1"
@@ -138,7 +139,7 @@ export const WorkoutTemplateCreate: Component<Props> = (props) => {
                   </Field>
                 </Show>
                 <Show when={unit() === "kg"}>
-                  <Field label="Target weight (kg)">
+                  <Field label={t("field.targetWeight")}>
                     <input
                       type="number"
                       min="0"
@@ -155,7 +156,7 @@ export const WorkoutTemplateCreate: Component<Props> = (props) => {
                   </Field>
                 </Show>
                 <Show when={unit() === "seconds" || unit() === "meters"}>
-                  <Field label="Target seconds">
+                  <Field label={t("field.targetSeconds")}>
                     <input
                       type="number"
                       min="1"
@@ -172,7 +173,7 @@ export const WorkoutTemplateCreate: Component<Props> = (props) => {
                 </Show>
                 <Show when={items().length > 1}>
                   <button type="button" onClick={() => removeItem(index())}>
-                    Remove item
+                    {t("workouts.removeItem")}
                   </button>
                 </Show>
               </div>
@@ -180,7 +181,7 @@ export const WorkoutTemplateCreate: Component<Props> = (props) => {
           }}
         </For>
         <button type="button" onClick={() => setItems((p) => [...p, emptyItem()])}>
-          + Add item
+          {t("workouts.addItem")}
         </button>
       </Show>
     </FormShell>

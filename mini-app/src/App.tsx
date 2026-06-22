@@ -11,6 +11,7 @@ import {
   onCleanup,
 } from "solid-js";
 import { TrainBeatApi, type User } from "./api";
+import { t } from "./lib/i18n";
 import type { Page } from "./lib/navigation";
 import { getInitData, getWebApp, setBackButton } from "./lib/telegram";
 import { AthleteHome } from "./pages/AthleteHome";
@@ -27,7 +28,7 @@ import { Workouts } from "./pages/Workouts";
 async function bootstrap(): Promise<{ api: TrainBeatApi; user: User }> {
   const initData = getInitData();
   if (!initData) {
-    throw new Error("Open this app inside Telegram.");
+    throw new Error(t("error.notInTelegram"));
   }
   const api = new TrainBeatApi(initData);
   await api.authenticate();
@@ -76,10 +77,10 @@ export const App: Component = () => {
     <ErrorBoundary
       fallback={(err: unknown, reset) => (
         <main class="page">
-          <h1>Something went wrong</h1>
+          <h1>{t("error.title")}</h1>
           <p>{err instanceof Error ? err.message : String(err)}</p>
           <button type="button" onClick={reset}>
-            Try again
+            {t("error.retry")}
           </button>
         </main>
       )}
@@ -87,7 +88,7 @@ export const App: Component = () => {
       <Suspense
         fallback={
           <main class="page">
-            <h1>Loading TrainBeat…</h1>
+            <h1>{t("app.loading")}</h1>
           </main>
         }
       >

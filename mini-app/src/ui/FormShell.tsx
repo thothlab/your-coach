@@ -1,4 +1,5 @@
 import { type JSX, type ParentComponent, Show } from "solid-js";
+import { t } from "../lib/i18n";
 
 interface Props {
   title: string;
@@ -18,7 +19,7 @@ export const FormShell: ParentComponent<Props> = (props) => {
   return (
     <main class="page">
       <button type="button" onClick={props.onBack}>
-        ← back
+        {t("common.back")}
       </button>
       <h1>{props.title}</h1>
       <Show when={props.error}>
@@ -28,7 +29,7 @@ export const FormShell: ParentComponent<Props> = (props) => {
         {props.children}
         <div style={{ "margin-top": "20px" }}>
           <button type="submit" disabled={props.submitting}>
-            {props.submitting ? "Saving…" : (props.submitLabel ?? "Save")}
+            {props.submitting ? t("common.saving") : (props.submitLabel ?? t("common.save"))}
           </button>
         </div>
       </form>

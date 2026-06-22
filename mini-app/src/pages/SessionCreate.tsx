@@ -2,6 +2,7 @@ import { type Component, For, Show, createResource, createSignal } from "solid-j
 import type { TrainBeatApi } from "../api";
 import { errorMessage } from "../lib/api-error";
 import { t } from "../lib/i18n";
+import { DateTimePicker } from "../ui/DateTimePicker";
 import { Field, FormShell } from "../ui/FormShell";
 
 interface Props {
@@ -99,11 +100,7 @@ export const SessionCreate: Component<Props> = (props) => {
         </select>
       </Field>
       <Field label={t("field.start")}>
-        <input
-          type="datetime-local"
-          value={start()}
-          onInput={(e) => setStart(e.currentTarget.value)}
-        />
+        <DateTimePicker value={start()} onChange={setStart} />
       </Field>
       <Field label={t("field.durationMin")}>
         <input

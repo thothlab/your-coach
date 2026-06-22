@@ -1,8 +1,17 @@
 :root {
   --color-bg: var(--tg-theme-bg-color, #ffffff);
-  --color-text: var(--tg-theme-text-color, #000000);
-  --color-accent: var(--tg-theme-button-color, #0088cc);
+  --color-text: var(--tg-theme-text-color, #0f0f0f);
+  --color-accent: var(--tg-theme-button-color, #2ea6ff);
+  --color-accent-text: var(--tg-theme-button-text-color, #ffffff);
+  --color-hint: var(--tg-theme-hint-color, color-mix(in srgb, var(--color-text) 50%, transparent));
+  --color-card: var(
+    --tg-theme-secondary-bg-color,
+    color-mix(in srgb, var(--color-text) 6%, var(--color-bg))
+  );
+  --color-border: color-mix(in srgb, var(--color-text) 12%, transparent);
   --font-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --radius: 16px;
+  --radius-sm: 10px;
 }
 
 * {
@@ -14,6 +23,9 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-base);
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
 }
 
 .page {
@@ -21,65 +33,228 @@ body {
   max-width: 720px;
   margin: 0 auto;
   overflow-x: hidden;
-  box-sizing: border-box;
 }
 
 @media (max-width: 480px) {
   .page {
-    padding: 12px;
+    padding: 14px;
   }
 }
 
-.page button {
-  margin: 4px 4px 4px 0;
-}
-
 .page h1 {
-  font-size: 24px;
-  margin: 0 0 16px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 4px 0 16px;
 }
 
 .page h2 {
-  font-size: 18px;
-  margin: 24px 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-hint);
+  margin: 20px 0 10px;
 }
 
+.page h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+/* Sections render as cards. */
+.page section {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.page section h2:first-child {
+  margin-top: 0;
+}
+
+.page p {
+  margin: 8px 0;
+}
+
+/* Lists become stacked rows. */
 .page ul {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .page li {
-  padding: 12px 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-text) 12%, transparent);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
 }
 
+/* Buttons: accent primary by default. */
 .page button {
-  padding: 8px 16px;
-  border-radius: 8px;
+  appearance: none;
+  padding: 11px 16px;
+  border-radius: 12px;
   border: none;
   background: var(--color-accent);
-  color: var(--tg-theme-button-text-color, #ffffff);
-  font-size: 14px;
+  color: var(--color-accent-text);
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
+  margin: 4px 6px 4px 0;
+  transition: transform 0.05s ease, opacity 0.15s ease;
+}
+
+.page button:active {
+  transform: scale(0.98);
 }
 
 .page button:disabled {
   opacity: 0.5;
+  cursor: default;
+}
+
+/* Tinted, lower-emphasis action. */
+.page button.secondary {
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  color: var(--color-accent);
+}
+
+/* Plain text back link. */
+.page button.back {
+  background: transparent;
+  color: var(--color-hint);
+  font-weight: 500;
+  padding: 6px 0;
+  margin: 0 0 4px;
+}
+
+/* Home action grid: first action spans full width, rest in two columns. */
+.page nav {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.page nav button {
+  width: 100%;
+  margin: 0;
+}
+
+.page nav button:first-child {
+  grid-column: 1 / -1;
 }
 
 .page input,
 .page select,
 .page textarea {
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid color-mix(in srgb, var(--color-text) 30%, transparent);
-  background: var(--tg-theme-secondary-bg-color, transparent);
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
   color: var(--color-text);
   font: inherit;
   width: 100%;
-  max-width: 320px;
+  max-width: 360px;
+}
+
+.page input:focus,
+.page select:focus,
+.page textarea:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+/* Custom date/time picker. */
+.dtp {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  max-width: 360px;
+}
+
+.dtp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.dtp-head button {
+  margin: 0;
+  padding: 6px 12px;
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  color: var(--color-accent);
+}
+
+.dtp-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.dtp-dow {
+  text-align: center;
+  font-size: 11px;
+  color: var(--color-hint);
+  padding: 4px 0;
+}
+
+.dtp-day {
+  margin: 0;
+  padding: 0;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.dtp-day.selected {
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+}
+
+.dtp-time {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.dtp-time select {
+  width: auto;
+  flex: 1;
+  text-align: center;
+}
+
+.banner-error {
+  background: color-mix(in srgb, tomato 18%, transparent);
+  border: 1px solid tomato;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  margin: 8px 0;
+  font-size: 13px;
+}
+
+.banner-success {
+  background: color-mix(in srgb, mediumseagreen 18%, transparent);
+  border: 1px solid mediumseagreen;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  margin: 8px 0;
+  font-size: 13px;
 }
 
 .lang-switch {
@@ -92,31 +267,15 @@ body {
 .lang-switch button {
   padding: 4px 10px;
   font-size: 12px;
+  font-weight: 600;
   background: transparent;
   color: var(--color-text);
-  border: 1px solid color-mix(in srgb, var(--color-text) 25%, transparent);
+  border: 1px solid var(--color-border);
+  margin: 0;
 }
 
 .lang-switch button.active {
   background: var(--color-accent);
-  color: var(--tg-theme-button-text-color, #ffffff);
+  color: var(--color-accent-text);
   border-color: var(--color-accent);
-}
-
-.banner-error {
-  background: color-mix(in srgb, tomato 18%, transparent);
-  border: 1px solid tomato;
-  padding: 8px;
-  border-radius: 8px;
-  margin: 8px 0;
-  font-size: 13px;
-}
-
-.banner-success {
-  background: color-mix(in srgb, mediumseagreen 18%, transparent);
-  border: 1px solid mediumseagreen;
-  padding: 8px;
-  border-radius: 8px;
-  margin: 8px 0;
-  font-size: 13px;
 }

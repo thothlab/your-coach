@@ -13,7 +13,7 @@ export const Workouts: Component<Props> = (props) => {
 
   return (
     <main class="page">
-      <button type="button" onClick={props.onBack}>
+      <button type="button" class="back" onClick={props.onBack}>
         {t("common.back")}
       </button>
       <h1>{t("workouts.title")}</h1>

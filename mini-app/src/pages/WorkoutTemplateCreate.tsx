@@ -1,4 +1,4 @@
-import { type Component, For, Show, createResource, createSignal } from "solid-js";
+import { type Component, For, Index, Show, createResource, createSignal } from "solid-js";
 import type { TrainBeatApi } from "../api";
 import { errorMessage } from "../lib/api-error";
 import { t } from "../lib/i18n";
@@ -91,16 +91,16 @@ export const WorkoutTemplateCreate: Component<Props> = (props) => {
 
       <Show when={!exercises.loading} fallback={<p>{t("workouts.loadingExercises")}</p>}>
         <h2>{t("workouts.items")}</h2>
-        <For each={items()}>
+        <Index each={items()}>
           {(item, index) => {
-            const unit = () => unitOf(item.exercise_id);
+            const unit = () => unitOf(item().exercise_id);
             return (
               <div style={{ "border-bottom": "1px solid #ccc", padding: "8px 0" }}>
-                <Field label={t("workouts.itemExercise", { n: index() + 1 })}>
+                <Field label={t("workouts.itemExercise", { n: index + 1 })}>
                   <select
-                    value={item.exercise_id ?? ""}
+                    value={item().exercise_id ?? ""}
                     onChange={(e) =>
-                      updateItem(index(), {
+                      updateItem(index, {
                         exercise_id: e.currentTarget.value ? Number(e.currentTarget.value) : null,
                       })
                     }
@@ -120,8 +120,8 @@ export const WorkoutTemplateCreate: Component<Props> = (props) => {
                     type="number"
                     min="1"
                     max="99"
-                    value={item.sets}
-                    onInput={(e) => updateItem(index(), { sets: Number(e.currentTarget.value) })}
+                    value={item().sets}
+                    onInput={(e) => updateItem(index, { sets: Number(e.currentTarget.value) })}
                   />
                 </Field>
                 <Show when={unit() === "reps" || unit() === "kg" || unit() === "meters"}>
@@ -129,9 +129,9 @@ export const WorkoutTemplateCreate: Component<Props> = (props) => {
                     <input
                       type="number"
                       min="1"
-                      value={item.target_reps ?? ""}
+                      value={item().target_reps ?? ""}
                       onInput={(e) =>
-                        updateItem(index(), {
+                        updateItem(index, {
                           target_reps: e.currentTarget.value ? Number(e.currentTarget.value) : null,
                         })
                       }
@@ -144,9 +144,9 @@ export const WorkoutTemplateCreate: Component<Props> = (props) => {
                       type="number"
                       min="0"
                       step="0.5"
-                      value={item.target_weight ?? ""}
+                      value={item().target_weight ?? ""}
                       onInput={(e) =>
-                        updateItem(index(), {
+                        updateItem(index, {
                           target_weight: e.currentTarget.value
                             ? Number(e.currentTarget.value)
                             : null,
@@ -160,9 +160,9 @@ export const WorkoutTemplateCreate: Component<Props> = (props) => {
                     <input
                       type="number"
                       min="1"
-                      value={item.target_seconds ?? ""}
+                      value={item().target_seconds ?? ""}
                       onInput={(e) =>
-                        updateItem(index(), {
+                        updateItem(index, {
                           target_seconds: e.currentTarget.value
                             ? Number(e.currentTarget.value)
                             : null,
@@ -172,14 +172,14 @@ export const WorkoutTemplateCreate: Component<Props> = (props) => {
                   </Field>
                 </Show>
                 <Show when={items().length > 1}>
-                  <button type="button" onClick={() => removeItem(index())}>
+                  <button type="button" onClick={() => removeItem(index)}>
                     {t("workouts.removeItem")}
                   </button>
                 </Show>
               </div>
             );
           }}
-        </For>
+        </Index>
         <button type="button" onClick={() => setItems((p) => [...p, emptyItem()])}>
           {t("workouts.addItem")}
         </button>

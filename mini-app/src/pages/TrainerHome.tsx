@@ -1,10 +1,11 @@
 import { type Component, For, Show, createResource } from "solid-js";
 import type { TrainBeatApi, User } from "../api";
+import type { Navigate } from "../lib/navigation";
 
 interface Props {
   api: TrainBeatApi;
   user: User;
-  onOpenSession: (sessionId: number) => void;
+  navigate: Navigate;
 }
 
 export const TrainerHome: Component<Props> = (props) => {
@@ -18,6 +19,24 @@ export const TrainerHome: Component<Props> = (props) => {
   return (
     <main class="page">
       <h1>TrainBeat · {props.user.name}</h1>
+
+      <nav>
+        <button type="button" onClick={() => props.navigate({ kind: "group-new" })}>
+          Create group
+        </button>
+        <button type="button" onClick={() => props.navigate({ kind: "session-new" })}>
+          New session
+        </button>
+        <button type="button" onClick={() => props.navigate({ kind: "exercises" })}>
+          Exercises
+        </button>
+        <button type="button" onClick={() => props.navigate({ kind: "workouts" })}>
+          Workouts
+        </button>
+        <button type="button" onClick={() => props.navigate({ kind: "broadcast" })}>
+          Broadcast
+        </button>
+      </nav>
 
       <section>
         <h2>Groups</h2>
@@ -56,7 +75,10 @@ export const TrainerHome: Component<Props> = (props) => {
                     <small>· recurring</small>
                   </Show>
                 </div>
-                <button type="button" onClick={() => props.onOpenSession(session.id)}>
+                <button
+                  type="button"
+                  onClick={() => props.navigate({ kind: "session-detail", sessionId: session.id })}
+                >
                   Open
                 </button>
               </li>

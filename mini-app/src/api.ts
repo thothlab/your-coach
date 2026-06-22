@@ -64,6 +64,77 @@ export class TrainBeatApi {
     return this.request("GET", "/api/groups");
   }
 
+  createGroup(
+    name: string,
+    type: "group" | "personal",
+  ): Promise<{ id: number; name: string; type: string; active_member_count: number }> {
+    return this.request("POST", "/api/groups", { name, type });
+  }
+
+  sendBroadcast(groupId: number, text: string): Promise<{ recipient_count: number }> {
+    return this.request("POST", `/api/groups/${groupId}/broadcast`, { text });
+  }
+
+  listExercises(): Promise<Array<{ id: number; name: string; unit: string }>> {
+    return this.request("GET", "/api/exercises");
+  }
+
+  createExercise(
+    name: string,
+    unit: "reps" | "seconds" | "meters" | "kg",
+  ): Promise<{ id: number; name: string; unit: string }> {
+    return this.request("POST", "/api/exercises", { name, unit });
+  }
+
+  listWorkoutTemplates(): Promise<
+    Array<{
+      id: number;
+      name: string;
+      items: Array<{
+        exercise_id: number;
+        position: number;
+        sets: number;
+        target_reps: number | null;
+        target_weight: number | null;
+        target_seconds: number | null;
+      }>;
+    }>
+  > {
+    return this.request("GET", "/api/workouts");
+  }
+
+  createWorkoutTemplate(
+    name: string,
+    items: Array<{
+      exercise_id: number;
+      sets: number;
+      target_reps?: number;
+      target_weight?: number;
+      target_seconds?: number;
+    }>,
+  ): Promise<{ id: number; name: string }> {
+    return this.request("POST", "/api/workouts", { name, items });
+  }
+
+  createSession(body: {
+    group_id: number;
+    workout_template_id?: number;
+    scheduled_at: string;
+    duration_min: number;
+    recurrence_rule?: string;
+  }): Promise<
+    Array<{
+      id: number;
+      group_id: number;
+      scheduled_at: string;
+      duration_min: number;
+      status: string;
+      recurrence_rule: string | null;
+    }>
+  > {
+    return this.request("POST", "/api/sessions", body);
+  }
+
   listSessions(
     from: string,
     to: string,

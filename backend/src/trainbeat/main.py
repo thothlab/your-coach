@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -17,6 +18,16 @@ from .middleware import TelegramAuthMiddleware
 
 app = FastAPI(title="TrainBeat API", version="0.0.1")
 app.add_middleware(TelegramAuthMiddleware)
+
+_client_log = logging.getLogger("trainbeat.clientlog")
+
+
+@app.get("/clientlog", include_in_schema=False)
+async def client_log(m: str = "") -> dict[str, bool]:
+    # Temporary client-side diagnostics beacon (public, no auth). Lets the
+    # device report JS errors / boot stages that we can't see server-side.
+    _client_log.warning("CLIENTLOG %s", m[:1000])
+    return {"ok": True}
 app.include_router(health_api.router)
 app.include_router(webhook_api.router)
 app.include_router(auth_api.router)

@@ -5,6 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>TrainBeat</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- TEMP diagnostics: report boot stages + JS errors from the device. -->
+    <script>
+      (function () {
+        function beacon(m) {
+          try {
+            new Image().src = "/clientlog?m=" + encodeURIComponent(String(m)).slice(0, 600) + "&t=" + Date.now();
+          } catch (e) {}
+        }
+        window.__beacon = beacon;
+        beacon("html-boot ua=" + navigator.userAgent);
+        window.addEventListener("error", function (e) {
+          beacon("error: " + (e.message || "") + " @ " + (e.filename || "") + ":" + (e.lineno || "") + ":" + (e.colno || ""));
+        });
+        window.addEventListener("unhandledrejection", function (e) {
+          var r = e && e.reason;
+          beacon("reject: " + (r && (r.stack || r.message || r) || r));
+        });
+      })();
+    </script>
     <link rel="stylesheet" href="/src/styles/tokens.css" />
   </head>
   <body>

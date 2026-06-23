@@ -53,6 +53,41 @@ See `docs/decisions/05-hosting.md` for the architecture rationale.
      python scripts/botfather_setup.py
    ```
 
+## Media storage channel
+
+Exercise photos/videos are not stored on disk — the bot uploads them into a
+private Telegram channel (`STORAGE_CHANNEL_ID` in `.env`) and we keep only the
+Telegram file ids in Postgres. The channel is a hidden blob store.
+
+Setup:
+1. Create a Telegram **channel** and add the bot as an **administrator** (it
+   needs "Post messages").
+2. Get its numeric id (forward a post to `@userinfobot`, or read it from
+   `getUpdates`) — it looks like `-1001234567890`.
+3. Put it in `.env`: `STORAGE_CHANNEL_ID=-1001234567890`, then restart `app`.
+
+**Keep the channel private — do not give it a public @username.** Membership in
+this channel is separate from using the bot or the Mini-App, so normal users are
+never added to it and cannot see it. But a *public* channel is discoverable by
+search: anyone typing the @username could open it and browse the entire exercise
+media library. A private (invite-only) channel cannot be found this way.
+
+Verify it is private at any time (`username` must print `None`):
+```bash
+docker compose -f deploy/docker-compose.prod.yml exec app python -c \
+"import asyncio; from aiogram import Bot; from trainbeat.config import settings
+async def m():
+    b = Bot(settings.telegram_bot_token)
+    c = await b.get_chat(settings.storage_channel_id)
+    print('username:', c.username)  # None = private (good); non-null = public (fix it)
+    await b.session.close()
+asyncio.run(m())"
+```
+
+Media reaches users without exposing the channel: photos are proxied/streamed
+through the backend into the Mini-App; videos are re-sent into the user's own
+private chat with the bot by file id.
+
 ## Day-to-day updates
 
 ```bash

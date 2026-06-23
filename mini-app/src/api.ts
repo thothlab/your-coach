@@ -37,6 +37,21 @@ export interface MediaInfo {
   media_file_unique_id: string | null;
 }
 
+export interface WorkoutTemplateItem {
+  exercise_id: number;
+  position: number;
+  sets: number;
+  target_reps: number | null;
+  target_weight: number | null;
+  target_seconds: number | null;
+}
+
+export interface WorkoutTemplate {
+  id: number;
+  name: string;
+  items: WorkoutTemplateItem[];
+}
+
 export class TrainBeatApi {
   constructor(private readonly initData: string) {}
 
@@ -102,6 +117,17 @@ export class TrainBeatApi {
     return this.request("POST", "/api/exercises", { name, unit });
   }
 
+  updateExercise(
+    id: number,
+    patch: { name?: string; unit?: "reps" | "seconds" | "meters" | "kg" },
+  ): Promise<Exercise> {
+    return this.request("PATCH", `/api/exercises/${id}`, patch);
+  }
+
+  clearExerciseMedia(exerciseId: number): Promise<MediaInfo> {
+    return this.request("DELETE", `/api/exercises/${exerciseId}/media`);
+  }
+
   async uploadExerciseMedia(exerciseId: number, file: File): Promise<MediaInfo> {
     const form = new FormData();
     form.append("file", file);
@@ -136,20 +162,7 @@ export class TrainBeatApi {
     return `${API_BASE}/media/file/${fileUniqueId}`;
   }
 
-  listWorkoutTemplates(): Promise<
-    Array<{
-      id: number;
-      name: string;
-      items: Array<{
-        exercise_id: number;
-        position: number;
-        sets: number;
-        target_reps: number | null;
-        target_weight: number | null;
-        target_seconds: number | null;
-      }>;
-    }>
-  > {
+  listWorkoutTemplates(): Promise<Array<WorkoutTemplate>> {
     return this.request("GET", "/api/workouts");
   }
 
@@ -164,6 +177,20 @@ export class TrainBeatApi {
     }>,
   ): Promise<{ id: number; name: string }> {
     return this.request("POST", "/api/workouts", { name, items });
+  }
+
+  updateWorkoutTemplate(
+    id: number,
+    name: string,
+    items: Array<{
+      exercise_id: number;
+      sets: number;
+      target_reps?: number;
+      target_weight?: number;
+      target_seconds?: number;
+    }>,
+  ): Promise<{ id: number; name: string }> {
+    return this.request("PUT", `/api/workouts/${id}`, { name, items });
   }
 
   createSession(body: {

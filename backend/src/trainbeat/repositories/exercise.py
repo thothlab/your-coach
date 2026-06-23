@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models import Exercise, ExerciseUnit
+from ..models import Exercise, ExerciseUnit, WorkoutTemplateItem
 
 
 async def create(
@@ -12,6 +12,14 @@ async def create(
     await session.commit()
     await session.refresh(exercise)
     return exercise
+
+
+async def is_used_in_template(session: AsyncSession, exercise_id: int) -> bool:
+    """True if any workout template references this exercise (blocks unit change)."""
+    stmt = select(WorkoutTemplateItem.id).where(
+        WorkoutTemplateItem.exercise_id == exercise_id
+    ).limit(1)
+    return await session.scalar(stmt) is not None
 
 
 async def list_for_trainer(session: AsyncSession, trainer_id: int) -> list[Exercise]:

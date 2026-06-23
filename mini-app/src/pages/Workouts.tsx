@@ -1,11 +1,12 @@
 import { type Component, For, Show, createResource } from "solid-js";
-import type { TrainBeatApi } from "../api";
+import type { TrainBeatApi, WorkoutTemplate } from "../api";
 import { t } from "../lib/i18n";
 
 interface Props {
   api: TrainBeatApi;
   onBack: () => void;
   onNew: () => void;
+  onEdit: (template: WorkoutTemplate) => void;
 }
 
 export const Workouts: Component<Props> = (props) => {
@@ -25,8 +26,18 @@ export const Workouts: Component<Props> = (props) => {
         <For each={templates()}>
           {(tpl) => (
             <li>
-              <strong>{tpl.name}</strong> ·{" "}
-              <small>{t("workouts.exerciseCount", { n: tpl.items.length })}</small>
+              <div style={{ display: "flex", "align-items": "center", gap: "8px" }}>
+                <strong>{tpl.name}</strong> ·{" "}
+                <small>{t("workouts.exerciseCount", { n: tpl.items.length })}</small>
+                <button
+                  type="button"
+                  class="secondary"
+                  style={{ "margin-left": "auto" }}
+                  onClick={() => props.onEdit(tpl)}
+                >
+                  {t("common.edit")}
+                </button>
+              </div>
             </li>
           )}
         </For>

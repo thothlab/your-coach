@@ -147,6 +147,28 @@ async def attach_link(
     return _media_info(ex)
 
 
+@router.delete("/{exercise_id}/media", response_model=MediaInfo)
+async def clear_media(
+    exercise_id: int,
+    user: Annotated[User, Depends(current_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> MediaInfo:
+    ex = await exercise_repo.get_owned(
+        session, exercise_id=exercise_id, trainer_id=user.id
+    )
+    if ex is None:
+        raise HTTPException(status_code=404, detail="exercise not found")
+    ex.media_type = None
+    ex.media_file_id = None
+    ex.media_file_unique_id = None
+    ex.media_message_id = None
+    ex.media_mime = None
+    ex.media_url = None
+    await session.commit()
+    await session.refresh(ex)
+    return _media_info(ex)
+
+
 @router.post("/{exercise_id}/media/send")
 async def send_media_to_chat(
     exercise_id: int,

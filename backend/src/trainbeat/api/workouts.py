@@ -20,6 +20,11 @@ class ExerciseCreateRequest(BaseModel):
     unit: ExerciseUnit
 
 
+class ExerciseUpdateRequest(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    unit: ExerciseUnit | None = None
+
+
 class ExerciseResponse(BaseModel):
     id: int
     name: str
@@ -139,33 +144,53 @@ async def list_exercises(
     return [_exercise_response(ex) for ex in rows]
 
 
-@workouts_router.post("", response_model=TemplateResponse, status_code=201)
-async def create_template(
-    body: TemplateCreateRequest,
+@exercises_router.patch("/{exercise_id}", response_model=ExerciseResponse)
+async def update_exercise(
+    exercise_id: int,
+    body: ExerciseUpdateRequest,
     user: Annotated[User, Depends(current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
-) -> TemplateResponse:
+) -> ExerciseResponse:
     _require_trainer(user)
-    exercise_ids = [item.exercise_id for item in body.items]
-    owned = await exercise_repo.get_owned_many(
-        session, ids=list(set(exercise_ids)), trainer_id=user.id
+    ex = await exercise_repo.get_owned(
+        session, exercise_id=exercise_id, trainer_id=user.id
     )
+    if ex is None:
+        raise HTTPException(status_code=404, detail="exercise not found")
+    if body.unit is not None and body.unit != ex.unit:
+        # Changing the unit would invalidate the target rules of any template
+        # that already references this exercise — forbid it while in use.
+        if await exercise_repo.is_used_in_template(session, exercise_id):
+            raise HTTPException(
+                status_code=409,
+                detail="cannot change unit: exercise is used in a workout template",
+            )
+        ex.unit = body.unit
+    if body.name is not None:
+        ex.name = body.name
+    await session.commit()
+    await session.refresh(ex)
+    return _exercise_response(ex)
+
+
+def _resolve_owned_exercises(
+    items: list[TemplateItemRequest],
+    owned: dict[int, object],
+) -> None:
+    """Raise if any item references an exercise the trainer doesn't own, then
+    validate each item's targets against its exercise unit."""
+    exercise_ids = [item.exercise_id for item in items]
     missing = [eid for eid in exercise_ids if eid not in owned]
     if missing:
         raise HTTPException(
             status_code=400,
             detail=f"exercises not owned by trainer: {missing}",
         )
-
-    for item in body.items:
+    for item in items:
         _validate_item_targets(owned[item.exercise_id].unit, item)
 
-    template = await workout_repo.create_template(
-        session,
-        trainer_id=user.id,
-        name=body.name,
-        items=[item.model_dump() for item in body.items],
-    )
+
+def _template_response(template) -> TemplateResponse:
     return TemplateResponse(
         id=template.id,
         name=template.name,
@@ -183,6 +208,52 @@ async def create_template(
     )
 
 
+@workouts_router.post("", response_model=TemplateResponse, status_code=201)
+async def create_template(
+    body: TemplateCreateRequest,
+    user: Annotated[User, Depends(current_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> TemplateResponse:
+    _require_trainer(user)
+    owned = await exercise_repo.get_owned_many(
+        session, ids=list({item.exercise_id for item in body.items}), trainer_id=user.id
+    )
+    _resolve_owned_exercises(body.items, owned)
+    template = await workout_repo.create_template(
+        session,
+        trainer_id=user.id,
+        name=body.name,
+        items=[item.model_dump() for item in body.items],
+    )
+    return _template_response(template)
+
+
+@workouts_router.put("/{template_id}", response_model=TemplateResponse)
+async def update_template(
+    template_id: int,
+    body: TemplateCreateRequest,
+    user: Annotated[User, Depends(current_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> TemplateResponse:
+    _require_trainer(user)
+    template = await workout_repo.get_owned(
+        session, template_id=template_id, trainer_id=user.id
+    )
+    if template is None:
+        raise HTTPException(status_code=404, detail="template not found")
+    owned = await exercise_repo.get_owned_many(
+        session, ids=list({item.exercise_id for item in body.items}), trainer_id=user.id
+    )
+    _resolve_owned_exercises(body.items, owned)
+    template = await workout_repo.replace_template(
+        session,
+        template=template,
+        name=body.name,
+        items=[item.model_dump() for item in body.items],
+    )
+    return _template_response(template)
+
+
 @workouts_router.get("", response_model=list[TemplateResponse])
 async def list_templates(
     user: Annotated[User, Depends(current_user)],
@@ -190,21 +261,4 @@ async def list_templates(
 ) -> list[TemplateResponse]:
     _require_trainer(user)
     templates = await workout_repo.list_for_trainer(session, user.id)
-    return [
-        TemplateResponse(
-            id=t.id,
-            name=t.name,
-            items=[
-                TemplateItemResponse(
-                    exercise_id=i.exercise_id,
-                    position=i.position,
-                    sets=i.sets,
-                    target_reps=i.target_reps,
-                    target_weight=i.target_weight,
-                    target_seconds=i.target_seconds,
-                )
-                for i in t.items
-            ],
-        )
-        for t in templates
-    ]
+    return [_template_response(t) for t in templates]

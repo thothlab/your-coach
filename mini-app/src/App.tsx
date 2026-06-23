@@ -10,7 +10,7 @@ import {
   createSignal,
   onCleanup,
 } from "solid-js";
-import { TrainBeatApi, type User } from "./api";
+import { type Exercise, TrainBeatApi, type User, type WorkoutTemplate } from "./api";
 import { t } from "./lib/i18n";
 import type { Page } from "./lib/navigation";
 import { getInitData, getWebApp, setBackButton } from "./lib/telegram";
@@ -114,20 +114,38 @@ export const App: Component = () => {
                   api={s.api}
                   onBack={back}
                   onNew={() => navigate({ kind: "exercise-new" })}
+                  onEdit={(exercise) => navigate({ kind: "exercise-edit", exercise })}
                 />
               </Match>
               <Match when={top().kind === "exercise-new"}>
-                <ExerciseCreate api={s.api} onBack={back} onCreated={back} />
+                <ExerciseCreate api={s.api} onBack={back} onSaved={back} />
+              </Match>
+              <Match when={top().kind === "exercise-edit"}>
+                <ExerciseCreate
+                  api={s.api}
+                  onBack={back}
+                  onSaved={back}
+                  exercise={(top() as { exercise: Exercise }).exercise}
+                />
               </Match>
               <Match when={top().kind === "workouts"}>
                 <Workouts
                   api={s.api}
                   onBack={back}
                   onNew={() => navigate({ kind: "workout-new" })}
+                  onEdit={(template) => navigate({ kind: "workout-edit", template })}
                 />
               </Match>
               <Match when={top().kind === "workout-new"}>
-                <WorkoutTemplateCreate api={s.api} onBack={back} onCreated={back} />
+                <WorkoutTemplateCreate api={s.api} onBack={back} onSaved={back} />
+              </Match>
+              <Match when={top().kind === "workout-edit"}>
+                <WorkoutTemplateCreate
+                  api={s.api}
+                  onBack={back}
+                  onSaved={back}
+                  template={(top() as { template: WorkoutTemplate }).template}
+                />
               </Match>
               <Match when={top().kind === "session-new"}>
                 <SessionCreate api={s.api} onBack={back} onCreated={home} />

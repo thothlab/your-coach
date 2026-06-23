@@ -1,11 +1,12 @@
 import { type Component, For, Show, createResource, createSignal } from "solid-js";
-import type { TrainBeatApi } from "../api";
+import type { Exercise, TrainBeatApi } from "../api";
 import { t } from "../lib/i18n";
 
 interface Props {
   api: TrainBeatApi;
   onBack: () => void;
   onNew: () => void;
+  onEdit: (exercise: Exercise) => void;
 }
 
 export const Exercises: Component<Props> = (props) => {
@@ -32,7 +33,17 @@ export const Exercises: Component<Props> = (props) => {
         <For each={exercises()}>
           {(ex) => (
             <li>
-              <strong>{ex.name}</strong> · <small>{ex.unit}</small>
+              <div style={{ display: "flex", "align-items": "center", gap: "8px" }}>
+                <strong>{ex.name}</strong> · <small>{ex.unit}</small>
+                <button
+                  type="button"
+                  class="secondary"
+                  style={{ "margin-left": "auto" }}
+                  onClick={() => props.onEdit(ex)}
+                >
+                  {t("common.edit")}
+                </button>
+              </div>
               <Show when={ex.media_type === "photo" && ex.media_file_unique_id}>
                 <div>
                   <img

@@ -1,6 +1,7 @@
 import { type Component, For, Show, createResource, createSignal } from "solid-js";
 import type { Exercise, TrainBeatApi } from "../api";
 import { t } from "../lib/i18n";
+import { PencilIcon } from "../ui/icons";
 
 interface Props {
   api: TrainBeatApi;
@@ -33,15 +34,18 @@ export const Exercises: Component<Props> = (props) => {
         <For each={exercises()}>
           {(ex) => (
             <li>
-              <div style={{ display: "flex", "align-items": "center", gap: "8px" }}>
-                <strong>{ex.name}</strong> · <small>{ex.unit}</small>
+              <div class="row-line">
+                <span>
+                  <strong>{ex.name}</strong> · <small>{ex.unit}</small>
+                </span>
                 <button
                   type="button"
-                  class="secondary"
+                  class="secondary icon-btn"
                   style={{ "margin-left": "auto" }}
+                  aria-label={t("common.edit")}
                   onClick={() => props.onEdit(ex)}
                 >
-                  {t("common.edit")}
+                  <PencilIcon />
                 </button>
               </div>
               <Show when={ex.media_type === "photo" && ex.media_file_unique_id}>

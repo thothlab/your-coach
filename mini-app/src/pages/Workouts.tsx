@@ -1,6 +1,7 @@
 import { type Component, For, Show, createResource } from "solid-js";
 import type { TrainBeatApi, WorkoutTemplate } from "../api";
 import { t } from "../lib/i18n";
+import { PencilIcon } from "../ui/icons";
 
 interface Props {
   api: TrainBeatApi;
@@ -26,16 +27,18 @@ export const Workouts: Component<Props> = (props) => {
         <For each={templates()}>
           {(tpl) => (
             <li>
-              <div style={{ display: "flex", "align-items": "center", gap: "8px" }}>
-                <strong>{tpl.name}</strong> ·{" "}
-                <small>{t("workouts.exerciseCount", { n: tpl.items.length })}</small>
+              <div class="row-line">
+                <span>
+                  <strong>{tpl.name}</strong> <small>({tpl.items.length})</small>
+                </span>
                 <button
                   type="button"
-                  class="secondary"
+                  class="secondary icon-btn"
                   style={{ "margin-left": "auto" }}
+                  aria-label={t("common.edit")}
                   onClick={() => props.onEdit(tpl)}
                 >
-                  {t("common.edit")}
+                  <PencilIcon />
                 </button>
               </div>
             </li>

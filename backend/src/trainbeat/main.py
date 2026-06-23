@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from .api import auth as auth_api
 from .api import groups as groups_api
 from .api import health as health_api
+from .api import media as media_api
 from .api import me as me_api
 from .api import sessions as sessions_api
 from .api import webhook as webhook_api
@@ -24,6 +25,8 @@ app.include_router(groups_api.router)
 app.include_router(workouts_api.exercises_router)
 app.include_router(workouts_api.workouts_router)
 app.include_router(sessions_api.router)
+app.include_router(media_api.router)
+app.include_router(media_api.public_router)
 
 
 def _mount_mini_app() -> None:

@@ -30,6 +30,13 @@ async def get_owned(
     return await session.scalar(stmt)
 
 
+async def get_by_media_unique_id(
+    session: AsyncSession, file_unique_id: str
+) -> Exercise | None:
+    stmt = select(Exercise).where(Exercise.media_file_unique_id == file_unique_id)
+    return await session.scalar(stmt)
+
+
 async def get_owned_many(
     session: AsyncSession, *, ids: list[int], trainer_id: int
 ) -> dict[int, Exercise]:

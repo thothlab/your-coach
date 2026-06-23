@@ -114,6 +114,13 @@ const en: Dict = {
 
   "exercises.new": "+ New exercise",
   "exercises.newTitle": "New exercise",
+  "exercise.mediaFile": "Photo or video (optional)",
+  "exercise.mediaLink": "…or a link (YouTube / image)",
+  "exercise.uploading": "Uploading…",
+  "exercise.watch": "Watch in Telegram",
+  "exercise.sent": "Sent to your chat ✓",
+  "exercise.openLink": "Open link",
+  "exercise.video": "Video",
 
   "unit.kg": "kg (weighted)",
   "unit.reps": "reps (bodyweight)",
@@ -232,6 +239,13 @@ const ru: Dict = {
 
   "exercises.new": "+ Новое упражнение",
   "exercises.newTitle": "Новое упражнение",
+  "exercise.mediaFile": "Фото или видео (необязательно)",
+  "exercise.mediaLink": "…или ссылка (YouTube / картинка)",
+  "exercise.uploading": "Загрузка…",
+  "exercise.watch": "Смотреть в Telegram",
+  "exercise.sent": "Отправлено в чат ✓",
+  "exercise.openLink": "Открыть ссылку",
+  "exercise.video": "Видео",
 
   "unit.kg": "кг (с весом)",
   "unit.reps": "повторения (свой вес)",

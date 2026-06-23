@@ -24,6 +24,20 @@ class ExerciseResponse(BaseModel):
     id: int
     name: str
     unit: str
+    media_type: str | None = None
+    media_url: str | None = None
+    media_file_unique_id: str | None = None
+
+
+def _exercise_response(ex) -> "ExerciseResponse":
+    return ExerciseResponse(
+        id=ex.id,
+        name=ex.name,
+        unit=ex.unit.value,
+        media_type=ex.media_type,
+        media_url=ex.media_url,
+        media_file_unique_id=ex.media_file_unique_id,
+    )
 
 
 class TemplateItemRequest(BaseModel):
@@ -112,7 +126,7 @@ async def create_exercise(
 ) -> ExerciseResponse:
     _require_trainer(user)
     ex = await exercise_repo.create(session, trainer_id=user.id, name=body.name, unit=body.unit)
-    return ExerciseResponse(id=ex.id, name=ex.name, unit=ex.unit.value)
+    return _exercise_response(ex)
 
 
 @exercises_router.get("", response_model=list[ExerciseResponse])
@@ -122,7 +136,7 @@ async def list_exercises(
 ) -> list[ExerciseResponse]:
     _require_trainer(user)
     rows = await exercise_repo.list_for_trainer(session, user.id)
-    return [ExerciseResponse(id=ex.id, name=ex.name, unit=ex.unit.value) for ex in rows]
+    return [_exercise_response(ex) for ex in rows]
 
 
 @workouts_router.post("", response_model=TemplateResponse, status_code=201)

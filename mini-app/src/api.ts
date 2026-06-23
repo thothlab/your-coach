@@ -22,6 +22,21 @@ export interface ApiError {
   detail: string;
 }
 
+export interface Exercise {
+  id: number;
+  name: string;
+  unit: string;
+  media_type: string | null;
+  media_url: string | null;
+  media_file_unique_id: string | null;
+}
+
+export interface MediaInfo {
+  media_type: string | null;
+  media_url: string | null;
+  media_file_unique_id: string | null;
+}
+
 export class TrainBeatApi {
   constructor(private readonly initData: string) {}
 
@@ -79,15 +94,46 @@ export class TrainBeatApi {
     return this.request("POST", `/api/groups/${groupId}/invites`);
   }
 
-  listExercises(): Promise<Array<{ id: number; name: string; unit: string }>> {
+  listExercises(): Promise<Array<Exercise>> {
     return this.request("GET", "/api/exercises");
   }
 
-  createExercise(
-    name: string,
-    unit: "reps" | "seconds" | "meters" | "kg",
-  ): Promise<{ id: number; name: string; unit: string }> {
+  createExercise(name: string, unit: "reps" | "seconds" | "meters" | "kg"): Promise<Exercise> {
     return this.request("POST", "/api/exercises", { name, unit });
+  }
+
+  async uploadExerciseMedia(exerciseId: number, file: File): Promise<MediaInfo> {
+    const form = new FormData();
+    form.append("file", file);
+    // No Content-Type header — the browser sets the multipart boundary.
+    const response = await fetch(`${API_BASE}/media/exercise/${exerciseId}`, {
+      method: "POST",
+      headers: { "X-Telegram-Init-Data": this.initData },
+      body: form,
+    });
+    if (!response.ok) {
+      let detail = response.statusText;
+      try {
+        const json = await response.json();
+        if (typeof json?.detail === "string") detail = json.detail;
+      } catch {
+        // ignore
+      }
+      throw { status: response.status, detail } satisfies ApiError;
+    }
+    return (await response.json()) as MediaInfo;
+  }
+
+  attachExerciseLink(exerciseId: number, url: string): Promise<MediaInfo> {
+    return this.request("POST", `/api/exercises/${exerciseId}/media/link`, { url });
+  }
+
+  sendExerciseMedia(exerciseId: number): Promise<{ ok: boolean }> {
+    return this.request("POST", `/api/exercises/${exerciseId}/media/send`);
+  }
+
+  mediaFileUrl(fileUniqueId: string): string {
+    return `${API_BASE}/media/file/${fileUniqueId}`;
   }
 
   listWorkoutTemplates(): Promise<

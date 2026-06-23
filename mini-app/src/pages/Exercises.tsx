@@ -1,4 +1,4 @@
-import { type Component, For, Show, createResource } from "solid-js";
+import { type Component, For, Show, createResource, createSignal } from "solid-js";
 import type { TrainBeatApi } from "../api";
 import { t } from "../lib/i18n";
 
@@ -10,6 +10,13 @@ interface Props {
 
 export const Exercises: Component<Props> = (props) => {
   const [exercises] = createResource(() => props.api.listExercises());
+  const [sent, setSent] = createSignal<number | null>(null);
+
+  async function watch(id: number): Promise<void> {
+    await props.api.sendExerciseMedia(id);
+    setSent(id);
+    setTimeout(() => setSent((cur) => (cur === id ? null : cur)), 3000);
+  }
 
   return (
     <main class="page">
@@ -26,6 +33,29 @@ export const Exercises: Component<Props> = (props) => {
           {(ex) => (
             <li>
               <strong>{ex.name}</strong> · <small>{ex.unit}</small>
+              <Show when={ex.media_type === "photo" && ex.media_file_unique_id}>
+                <div>
+                  <img
+                    src={props.api.mediaFileUrl(ex.media_file_unique_id ?? "")}
+                    alt={ex.name}
+                    style={{ "max-width": "100%", "border-radius": "10px", "margin-top": "8px" }}
+                  />
+                </div>
+              </Show>
+              <Show when={ex.media_type === "video"}>
+                <div>
+                  <button type="button" class="secondary" onClick={() => watch(ex.id)}>
+                    {sent() === ex.id ? t("exercise.sent") : t("exercise.watch")}
+                  </button>
+                </div>
+              </Show>
+              <Show when={ex.media_type === "link" && ex.media_url}>
+                <div>
+                  <a href={ex.media_url ?? ""} target="_blank" rel="noreferrer">
+                    {t("exercise.openLink")}
+                  </a>
+                </div>
+              </Show>
             </li>
           )}
         </For>

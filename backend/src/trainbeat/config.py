@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     bot_mode: str = "polling"  # "polling" | "webhook"
     mini_app_dist: str = "mini-app/dist"
     scheduler_interval_minutes: int = 15
+    # Chat/channel the bot uses as a blob store for exercise media. Set to a
+    # private channel id (bot = admin) in prod. Unset → media upload returns 503.
+    storage_channel_id: int | None = None
 
 
 settings = Settings()
